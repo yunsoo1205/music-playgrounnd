@@ -222,6 +222,7 @@
  #boardCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.work-card{padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:white;overflow-wrap:anywhere}.work-card h3{margin:0 0 8px}.work-controls{display:flex;flex-wrap:wrap;gap:7px}.work-controls button{font-size:13px}
  .board-auth-msg{margin:10px 0 0;font-size:14px;font-weight:700;color:#9a3412}
  .board-auth-msg:empty{display:none}
+ .sample-tag{display:inline-block;font-size:12px;font-weight:700;color:#5b4b8a;background:#f1edfb;border:1px solid #d9d0f2;border-radius:999px;padding:2px 9px;margin-bottom:6px}
  .class-banner{background:#f0f7ee;border:1px solid #bfdcb6;border-radius:10px;padding:8px 12px;color:#2f5a2a;font-size:13.5px;margin:0 0 8px;display:inline-block}
  .class-warn{background:#fff7e6;border:1px solid #f2c36b;border-radius:10px;padding:10px 12px;color:#6b4a0e;font-size:13.5px;line-height:1.6;margin:10px 0}
  .class-join input{text-transform:uppercase;letter-spacing:.08em}
@@ -1358,8 +1359,33 @@ commit;
    openedId=null;await refresh();status(mine?'작품을 삭제했어요.':'관리자 권한으로 작품을 삭제했어요.')}));
   c.append(controls);return c;
  }
+ // ── 샘플: 로그인 안 하고 학급 코드도 없을 때는 관리자가 올린 샘플만 보여줌
+ const quiet=t=>{$('boardStatus').textContent=t};
+ async function loadSamples(){
+  if(user||CLASS||!db)return;
+  const ticket=++request;quiet('샘플 작품을 불러오는 중…');
+  try{
+   const r=await db.rpc('music_samples',{p_limit:24});if(ticket!==request||user)return;if(r.error)throw r.error;
+   const rows=r.data||[];$('boardCards').replaceChildren(...rows.map(sampleCard));
+   $('boardPage').textContent='샘플';$('boardPrev').disabled=true;$('boardNext').disabled=true;
+   quiet(rows.length?'🎼 샘플 작품을 들어 보세요. 닉네임으로 입장하면 친구들 작품도 보고 내 작품을 올릴 수 있어요.':'닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
+  }catch(e){quiet('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.')}
+ }
+ async function sampleScore(id){const r=await db.rpc('music_sample_score',{p_id:id});if(r.error||!r.data)throw Error('샘플을 불러오지 못했어요.');return safeScore(r.data)}
+ function sampleCard(w){
+  const c=node('article','','work-card');
+  c.append(node('span','🎼 샘플','sample-tag'),node('h3',w.title),node('p',w.nickname+' · '+new Date(w.created_at).toLocaleDateString('ko-KR'),'hint'),node('p',w.description));
+  const controls=node('div','','work-controls');
+  controls.append(action('▶ 듣기',async()=>{await window.ComposerBoard.preview(await sampleScore(w.id));quiet(w.title+' 감상 중 · 작곡 중인 내용은 그대로예요.')}),action('■',()=>window.ComposerBoard.stop()));
+  controls.append(action('사본으로 편집',async()=>{
+   const sc=await sampleScore(w.id);
+   if(!confirm('현재 작업을 임시저장하고 이 샘플의 사본을 불러올까요? 원본은 바뀌지 않아요.'))return;
+   window.ComposerBoard.import(sc);$('boardPanel').hidden=true;quiet('샘플 사본을 불러왔어요.');
+  }));
+  c.append(controls);return c;
+ }
  async function refresh(){
-  if(!user)return;const ticket=++request;status('작품을 불러오는 중…');
+  if(!user)return loadSamples();const ticket=++request;status('작품을 불러오는 중…');
   const data=check(await db.rpc('music_gallery',{sort_by:$('boardSort').value,page_number:page,only_mine:$('boardMine').checked,...(CLASS?{p_class:CLASS}:{})}));if(ticket!==request)return;
   $('boardCards').replaceChildren(...data.map(card));$('boardPage').textContent=(page+1)+'쪽';$('boardPrev').disabled=page===0;$('boardNext').disabled=data.length<12;
   status(data.length?'작품을 골라 들어 보세요.':'아직 작품이 없어요. 첫 작품을 올려 보세요.');
@@ -1374,8 +1400,8 @@ commit;
   let storage;try{storage=window.sessionStorage;storage.setItem('_t','1');storage.removeItem('_t')}catch{storage=undefined}
   await classReady;
   db=createClient(cfg.url,cfg.key,{auth:{storage,persistSession:true},global:{headers:CLASS?{'x-music-class':CLASS}:{}}});user=check(await db.auth.getSession()).session?.user||null;authUI();
-  db.auth.onAuthStateChange((_event,session)=>{const before=user?.id;user=session?.user||null;if(!user)isAdmin=false;else if(user.id!==before)checkAdmin();authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.')}});
-  if(user){await checkAdmin();await refresh()}else status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
+  db.auth.onAuthStateChange((_event,session)=>{const before=user?.id;user=session?.user||null;if(!user)isAdmin=false;else if(user.id!==before)checkAdmin();authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.');loadSamples()}});
+  if(user){await checkAdmin();await refresh()}else{status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');await loadSamples()}
  }
  $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;logEvent('board_open');try{await connect();if(user)await refresh()}catch(e){err(e)}};
  $('classJoinBtn').onclick=()=>{const c=cleanClass($('classCodeInput').value);if(c.length<4){status('학급 코드는 영문·숫자 4자 이상이에요.');return}moveTo(c)};
@@ -1392,7 +1418,7 @@ commit;
   const r=await db.auth.signUp({email,password,options:{data:{nickname:display}}});if(r.error)throw authErr(r.error);
   if(!r.data.session){const t=await db.auth.signInWithPassword({email,password});if(t.error){if(/not confirmed/i.test(t.error.message||''))throw Error('운영자 설정 필요: Supabase에서 「Confirm email」을 꺼 주세요.');throw authErr(t.error)}}
   await afterEnter();logEvent('signup');status('「'+display+'」(으)로 입장했어요. 닉네임과 비밀번호를 꼭 기억해 두세요!')}catch(e){err(e)}};
- $('boardLogout').onclick=async()=>{try{check(await db.auth.signOut());user=null;sourceId=null;$('boardSource').textContent='';authUI()}catch(e){err(e)}};
+ $('boardLogout').onclick=async()=>{try{check(await db.auth.signOut());user=null;isAdmin=false;sourceId=null;$('boardSource').textContent='';authUI();loadSamples()}catch(e){err(e)}};
  $('boardPublish').onclick=async()=>{
   if(busy)return;busy=true;$('boardPublish').disabled=true;
   try{await requireUser();const title=$('boardTitle').value.trim(),nickname=$('boardNick').value.trim(),description=$('boardDescription').value.trim();if(!title||!nickname)throw Error('작품 제목과 별명을 적어 주세요.');
