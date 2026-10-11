@@ -222,6 +222,10 @@
  #boardCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.work-card{padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:white;overflow-wrap:anywhere}.work-card h3{margin:0 0 8px}.work-controls{display:flex;flex-wrap:wrap;gap:7px}.work-controls button{font-size:13px}
  .board-auth-msg{margin:10px 0 0;font-size:14px;font-weight:700;color:#9a3412}
  .board-auth-msg:empty{display:none}
+ .class-banner{background:#f0f7ee;border:1px solid #bfdcb6;border-radius:10px;padding:8px 12px;color:#2f5a2a;font-size:13.5px;margin:0 0 8px;display:inline-block}
+ .class-warn{background:#fff7e6;border:1px solid #f2c36b;border-radius:10px;padding:10px 12px;color:#6b4a0e;font-size:13.5px;line-height:1.6;margin:10px 0}
+ .class-join input{text-transform:uppercase;letter-spacing:.08em}
+ .copyright-note{background:#eef4ff;border:1px solid #c7d7f5;border-radius:10px;padding:10px 12px;color:#34465f;font-size:13.5px;line-height:1.6;margin:8px 0 10px}
  .board-warning{background:#fff7e6;border:1px solid #f2c36b;border-radius:10px;padding:10px 12px;color:#6b4a0e;font-size:14px;line-height:1.6;margin:10px 0}
  .board-fields{display:flex;gap:12px;flex-wrap:wrap}.board-fields label{flex:1;min-width:180px}.board-fields input,.board-fields textarea{width:100%;box-sizing:border-box}.board-fields textarea{min-height:70px}#boardStatus{min-height:26px;color:#405d79}#boardLink{width:100%}
  @media(max-width:600px){#boardPanel{inset:4px;padding:14px}}
@@ -234,6 +238,7 @@
 <div class="wrap">
   <h1>음악놀이터</h1>
   <p class="subheading">음을 찍고, 반주를 넣고, 바로 들어 보세요.</p>
+  <p id="classBanner" class="class-banner" hidden></p>
   <p class="privacy-note">🔒 수업 개선을 위해 브라우저에 무작위 번호(쿠키)를 저장하고 재생·저장 같은 사용 기록을 모아요. 이름·이메일·연락처는 모으지 않아요.</p>
 
   <button id="drawerToggle" class="drawer-toggle" type="button" aria-controls="toolDrawer" aria-expanded="false">☰ 다양한 기능</button>
@@ -416,7 +421,9 @@
 
 
 <section id="boardPanel" hidden aria-label="작품마당"><div class="board-inner">
-<div class="board-top"><div><h2>작품마당</h2><p>나의 음악을 나누고, 친구의 음악을 이어 만들어요.</p></div><button id="boardClose">작곡실로 돌아가기</button></div>
+<div class="board-top"><div><h2 id="boardTitleText">작품마당</h2><p>나의 음악을 나누고, 친구의 음악을 이어 만들어요.</p></div><button id="boardClose">작곡실로 돌아가기</button></div>
+<p id="classWarn" class="class-warn" hidden></p>
+<div id="classJoin" class="board-box class-join"><strong>🏫 우리 반 작품마당</strong> <span id="classJoinText" class="hint">선생님께 받은 학급 코드가 있으면 넣어 주세요. 우리 반 친구들끼리만 작품을 볼 수 있어요.</span><div class="board-fields"><label>학급 코드<input id="classCodeInput" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false"></label></div><button id="classJoinBtn" type="button">우리 반으로 가기</button> <button id="classLeaveBtn" type="button" hidden>전체 작품마당으로 가기</button></div>
 <p id="boardStatus" role="status" aria-live="polite">연결을 준비하고 있어요.</p>
 <input id="boardLink" hidden readonly aria-label="공유할 작품 링크">
 <div id="boardAuth" class="board-box"><strong>작품마당 입장</strong><p class="hint">이메일 없이 닉네임과 비밀번호로 들어와요. 처음이면 「처음이에요 · 새로 만들기」, 다음부터는 같은 닉네임과 비밀번호로 「입장하기」를 누르세요. 작품은 작품마당에 들어온 모두에게 공개돼요.</p>
@@ -428,7 +435,7 @@
 <div id="boardMember" hidden><span id="boardUser"></span> <button id="boardLogout">나가기</button><p class="hint">공용 컴퓨터에서는 수업이 끝나면 꼭 「나가기」를 눌러 주세요. 창을 닫아도 자동으로 나가져요.</p></div>
 <details id="boardComposer" class="board-box" hidden><summary>지금 만든 작품 올리기</summary>
 <div class="board-fields"><label>제목<input id="boardTitle" maxlength="80"></label><label>닉네임<input id="boardNick" maxlength="30" readonly title="입장한 닉네임으로 올라가요"></label><label>작품 소개<textarea id="boardDescription" maxlength="500"></textarea></label></div>
-<p id="boardSource" class="hint"></p><label><input id="boardConsent" type="checkbox">내가 공유할 수 있는 작품이며, 회원 공개와 사본 편집을 허용해요.</label><p class="hint">음 배치·박자·악기·템포만 저장해요. WAV 파일은 올리지 않아요.</p><button id="boardPublish" class="primary">작품 올리기</button></details>
+<p id="boardSource" class="hint"></p><p id="copyrightNote" class="copyright-note">⚖️ <b>가요·애니·게임 OST처럼 저작권이 있는 노래를 그대로 옮기거나 편곡한 작품은 올리지 마세요.</b> 직접 만든 곡, 전래동요나 오래된 클래식처럼 누구나 쓸 수 있는 곡은 괜찮아요. 저작권에 어긋나는 작품은 관리자가 삭제할 수 있어요.</p><label><input id="boardConsent" type="checkbox"><span id="consentText">내가 직접 만든 곡이거나 누구나 쓸 수 있는 곡이에요. 작품마당 공개와 사본 편집을 허용해요.</span></label><p class="hint">음 배치·박자·악기·템포만 저장해요. WAV 파일은 올리지 않아요.</p><button id="boardPublish" class="primary">작품 올리기</button></details>
 <div class="work-controls"><label>정렬 <select id="boardSort"><option value="new">최신순</option><option value="likes">좋아요순</option><option value="remixes">많이 가져간 순</option></select></label><label><input id="boardMine" type="checkbox">내 작품만</label><button id="boardRefresh">새로고침 · 전체 목록</button></div>
 <p class="hint">좋아요·가져가기는 계정당 한 번 집계해요. ‘많이 가져간 순’은 사본을 가져간 회원 수이며, 편집을 완성한 횟수는 아니에요.</p>
 <div id="boardCards"></div><div class="work-controls" style="margin-top:16px"><button id="boardPrev" disabled>이전</button><span id="boardPage">1쪽</span><button id="boardNext" disabled>다음</button></div>
@@ -1237,6 +1244,40 @@ commit;
 <script>
 (() => {
  const $=id=>document.getElementById(id),cfg=window.MUSIC_BOARD_CONFIG;
+ let isAdmin=false;
+ // ── 학급 작품마당: 주소의 ?class=코드 → DB에 등록된 학급인지 확인 후에만 학급 모드
+ const cleanClass=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
+ const urlClass=cleanClass(new URLSearchParams(location.search).get('class'));
+ let CLASS=null,CLASS_INFO=null;
+ const classLabel=()=>CLASS_INFO?`${CLASS_INFO.school} ${CLASS_INFO.class_name}`:'';
+ async function loadClass(){
+  if(!urlClass)return;
+  if(urlClass.length<4||!cfg.url||!cfg.key){showClassProblem('학급 코드가 올바르지 않아요.');return}
+  try{
+   const r=await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/rpc/music_class_info',{method:'POST',headers:{apikey:cfg.key,'Content-Type':'application/json'},body:JSON.stringify({p_code:urlClass})});
+   const rows=r.ok?await r.json():null;
+   if(Array.isArray(rows)&&rows[0]){CLASS=rows[0].code;CLASS_INFO=rows[0];applyClassUI()}
+   else showClassProblem(r.ok?`등록되지 않은 학급 코드(${urlClass})예요. 선생님께 코드를 다시 확인해 주세요.`:'학급 정보를 확인하지 못했어요. 지금은 전체 작품마당으로 열려요.');
+  }catch(e){showClassProblem('학급 정보를 확인하지 못했어요. 인터넷 연결을 확인해 주세요.')}
+ }
+ function showClassProblem(t){const b=$('classBanner');b.hidden=false;b.style.background='#fff1f1';b.style.borderColor='#f2b8b8';b.style.color='#8a2c2c';b.textContent='⚠️ '+t}
+ function applyClassUI(){
+  const name=classLabel();
+  $('classBanner').hidden=false;$('classBanner').textContent=`🏫 ${name} 작품마당과 연결돼 있어요 (학급 코드 ${CLASS})`;
+  $('boardTitleText').textContent=`우리 반 작품마당 · ${name}`;
+  $('classWarn').hidden=false;
+  $('classWarn').textContent=`🔒 이 작품마당은 ${name} 수업용 공간이에요. 이 학급 코드를 가진 친구들만 볼 수 있어요. 여기 작품을 반 밖(전체 작품마당·SNS·유튜브 등)으로 옮기거나 공유하지 마세요. (저작권 보호)`;
+  $('classJoinText').textContent=`지금은 ${name} 작품마당이에요.`;$('classCodeInput').value=CLASS;$('classJoinBtn').hidden=true;$('classLeaveBtn').hidden=false;
+  $('copyrightNote').innerHTML='⚖️ 수업 시간에 편곡한 곡은 <b>우리 반 작품마당에만</b> 올릴 수 있어요. 반 밖(전체 작품마당·SNS·유튜브 등)에는 올리지 마세요. 저작권에 어긋나는 작품은 관리자가 삭제할 수 있어요.';
+  $('consentText').textContent='수업 활동으로 만든 작품이에요. 우리 반 친구들에게만 공개하고 사본 편집을 허용해요.';
+ }
+ const classReady=loadClass();
+ // 학급 이동은 페이지를 다시 여는 방식 → 작곡 중인 내용을 이 탭에 잠시 맡겼다가 돌려줌
+ function moveTo(code){
+  try{sessionStorage.setItem('mp_carry',JSON.stringify(window.ComposerBoard.get()));sessionStorage.setItem('mp_openboard','1')}catch(e){}
+  const u=new URL(location.href);u.hash='';u.search='';if(code)u.searchParams.set('class',code);location.href=u.href;
+ }
+ try{const carry=sessionStorage.getItem('mp_carry');if(carry){sessionStorage.removeItem('mp_carry');const st=JSON.parse(carry);if(st&&(st.notes?.length||st.accomp?.length||st.harmony?.length||st.rhythm?.length))window.ComposerBoard.import(st)}}catch(e){}
  let db,user=null,page=0,request=0,sourceId=null,busy=false,openedId=null;
  const status=t=>{$('boardStatus').textContent=t;$('boardAuthMsg').textContent=user?'':t};
  // ── 사용 기록: 활동 종류와 시각만 보냄(이메일·IP·기기정보 없음). 실패해도 앱 동작에는 영향 없음.
@@ -1257,7 +1298,7 @@ commit;
  window.MusicLog=(event,details)=>{logEvent(event,details)};
  let lastInput=Date.now();for(const t of ['pointerdown','keydown'])document.addEventListener(t,()=>{lastInput=Date.now()},{passive:true,capture:true});
  setInterval(()=>{if(document.visibilityState!=='visible'||Date.now()-lastInput>120000)return;let d={};try{const s=window.ComposerBoard.get();d={notes:s.notes.length+s.harmony.length+s.accomp.length,bars:s.bars}}catch(e){}logEvent('heartbeat',d)},60000);
- logEvent('session_start',{screen:innerWidth<700?'mobile':'desktop'});
+ logEvent('session_start',{screen:innerWidth<700?'mobile':'desktop',...(urlClass?{class:urlClass}:{})});
  // 닉네임 → 내부용 가짜 이메일. 메일은 발송되지 않음(Confirm email 꺼야 함).
  const NICK_DOMAIN='music-play-ground.vercel.app';
  function nickInfo(){
@@ -1291,7 +1332,8 @@ commit;
    s[t]=[...new Set(raw[t])].filter(k=>{if(typeof k!=='string'||!/^\d+:\d+$/.test(k))return false;const [r,c]=k.split(':').map(Number);return r<(t==='rhythm'?3:window.ComposerBoard.rowCount(s))&&c<s.bars*s.beats*s.divide});
   }return s;
  }
- function authUI(){ $('boardAuth').hidden=!!user;$('boardMember').hidden=!user;$('boardComposer').hidden=!user;$('boardUser').textContent=user?'입장함 · '+(nickOf(user)||'닉네임 없음'):'';$('boardNick').value=nickOf(user);if(!user)$('boardCards').replaceChildren(); }
+ async function checkAdmin(){if(!db||!user){isAdmin=false;return}try{const r=await db.rpc('is_music_admin');isAdmin=!r.error&&r.data===true}catch(e){isAdmin=false}authUI()}
+ function authUI(){ $('boardAuth').hidden=!!user;$('boardMember').hidden=!user;$('boardComposer').hidden=!user;$('boardUser').textContent=user?'입장함 · '+(nickOf(user)||'닉네임 없음')+(isAdmin?' · 🛡️ 관리자':''):'';$('boardNick').value=nickOf(user);if(!user)$('boardCards').replaceChildren(); }
  async function requireUser(){if(!db)throw Error('먼저 작품마당을 연결해 주세요.');if(!user)throw Error('닉네임으로 입장한 뒤 이용해 주세요.');}
  async function getWork(id){await requireUser();const w=check(await db.from('music_works').select('*').eq('id',id).single());w.score=safeScore(w.score);return w;}
  function card(w){
@@ -1300,7 +1342,7 @@ commit;
   const controls=node('div','','work-controls');
   controls.append(action('▶ 듣기',async()=>{const full=await getWork(w.id);await window.ComposerBoard.preview(full.score);status(w.title+' 감상 중 · 작곡 중인 내용은 그대로예요.')}),action('■',()=>window.ComposerBoard.stop()));
   controls.append(action((w.liked?'♥':'♡')+' '+(w.likes||0),async()=>{await requireUser();if(w.liked)check(await db.from('music_likes').delete().eq('work_id',w.id).eq('user_id',user.id));else{const r=await db.from('music_likes').insert({work_id:w.id});if(r.error?.code!=='23505'){check(r);logEvent('like')}}await refresh()}));
-  controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 입장이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
+  controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);if(CLASS)u.searchParams.set('class',CLASS);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 입장이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
   controls.append(action('사본으로 편집 · '+(w.remixes||0),async()=>{
    const full=await getWork(w.id);
    if(!confirm('현재 작업을 임시저장하고 이 작품의 사본을 불러올까요? 원본은 바뀌지 않아요.'))return;
@@ -1308,16 +1350,21 @@ commit;
    window.ComposerBoard.import(full.score);sourceId=w.id;logEvent('remix');$('boardSource').textContent='원작: '+w.title+' · '+w.nickname;$('boardTitle').value=w.title+' (이어 만들기)';
    $('boardPanel').hidden=true;status('사본을 불러왔어요.');await refresh();
   }));
-  if(w.owner_id===user?.id)controls.append(action('삭제',async()=>{if(!confirm('게시한 작품을 삭제할까요?'))return;check(await db.from('music_works').delete().eq('id',w.id).eq('owner_id',user.id));openedId=null;await refresh()}));
+  const mine=w.owner_id===user?.id;
+  if(mine||isAdmin)controls.append(action(mine?'삭제':'🛡️ 관리자 삭제',async()=>{
+   if(!confirm(mine?'게시한 작품을 삭제할까요?':`관리자 삭제: 「${w.title}」(${w.nickname}) 작품을 삭제할까요?\n좋아요·가져간 기록도 함께 지워지고 되돌릴 수 없어요.`))return;
+   let q=db.from('music_works').delete().eq('id',w.id);if(mine)q=q.eq('owner_id',user.id);
+   const gone=check(await q.select('id'));if(!gone||!gone.length)throw Error(mine?'삭제하지 못했어요. 새로고침 후 다시 시도해 주세요.':'관리자 권한이 확인되지 않아 삭제하지 못했어요. (작품마당_관리자.sql 실행 여부 확인)');
+   openedId=null;await refresh();status(mine?'작품을 삭제했어요.':'관리자 권한으로 작품을 삭제했어요.')}));
   c.append(controls);return c;
  }
  async function refresh(){
   if(!user)return;const ticket=++request;status('작품을 불러오는 중…');
-  const data=check(await db.rpc('music_gallery',{sort_by:$('boardSort').value,page_number:page,only_mine:$('boardMine').checked}));if(ticket!==request)return;
+  const data=check(await db.rpc('music_gallery',{sort_by:$('boardSort').value,page_number:page,only_mine:$('boardMine').checked,...(CLASS?{p_class:CLASS}:{})}));if(ticket!==request)return;
   $('boardCards').replaceChildren(...data.map(card));$('boardPage').textContent=(page+1)+'쪽';$('boardPrev').disabled=page===0;$('boardNext').disabled=data.length<12;
   status(data.length?'작품을 골라 들어 보세요.':'아직 작품이 없어요. 첫 작품을 올려 보세요.');
  }
- async function openWork(id){const w=await getWork(id);openedId=id;$('boardPanel').hidden=false;const counts=await db.rpc('music_gallery',{sort_by:'new',page_number:0,only_mine:false,work_filter:id});const entry=check(counts)?.find(x=>x.id===id)||w;$('boardCards').replaceChildren(card({...w,...entry}));status('공유받은 작품 · 전체 목록은 새로고침을 누르세요.');}
+ async function openWork(id){const w=await getWork(id);openedId=id;$('boardPanel').hidden=false;const counts=await db.rpc('music_gallery',{sort_by:'new',page_number:0,only_mine:false,work_filter:id,...(CLASS?{p_class:CLASS}:{})});const entry=check(counts)?.find(x=>x.id===id)||w;$('boardCards').replaceChildren(card({...w,...entry}));status('공유받은 작품 · 전체 목록은 새로고침을 누르세요.');}
  async function connect(){
   if(!cfg.url||!cfg.key){console.warn('MUSIC_BOARD_CONFIG의 url/key가 비어 있습니다.');throw Error('작품마당이 아직 연결되지 않았어요. 선생님께 알려 주세요. (연결 정보 없음)');}
   if(db)return;
@@ -1325,13 +1372,18 @@ commit;
   if(cfg.key.startsWith('sb_secret_')||(()=>{try{return JSON.parse(atob(cfg.key.split('.')[1])).role==='service_role'}catch{return false}})())throw Error('서버 비밀 키는 사용할 수 없어요. Publishable key를 넣어 주세요.');
   const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0/+esm');
   let storage;try{storage=window.sessionStorage;storage.setItem('_t','1');storage.removeItem('_t')}catch{storage=undefined}
-  db=createClient(cfg.url,cfg.key,{auth:{storage,persistSession:true}});user=check(await db.auth.getSession()).session?.user||null;authUI();
-  db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.')}});
-  if(user)await refresh();else status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
+  await classReady;
+  db=createClient(cfg.url,cfg.key,{auth:{storage,persistSession:true},global:{headers:CLASS?{'x-music-class':CLASS}:{}}});user=check(await db.auth.getSession()).session?.user||null;authUI();
+  db.auth.onAuthStateChange((_event,session)=>{const before=user?.id;user=session?.user||null;if(!user)isAdmin=false;else if(user.id!==before)checkAdmin();authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.')}});
+  if(user){await checkAdmin();await refresh()}else status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
  }
  $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;logEvent('board_open');try{await connect();if(user)await refresh()}catch(e){err(e)}};
+ $('classJoinBtn').onclick=()=>{const c=cleanClass($('classCodeInput').value);if(c.length<4){status('학급 코드는 영문·숫자 4자 이상이에요.');return}moveTo(c)};
+ $('classCodeInput').onkeydown=e=>{if(e.key==='Enter')$('classJoinBtn').click()};
+ $('classLeaveBtn').onclick=()=>moveTo(null);
+ try{if(sessionStorage.getItem('mp_openboard')){sessionStorage.removeItem('mp_openboard');setTimeout(()=>$('openBoard').click(),0)}}catch(e){}
  $('boardClose').onclick=()=>{$('boardPanel').hidden=true;window.ComposerBoard.stop()};
- async function afterEnter(){user=check(await db.auth.getUser()).user;$('boardPassword').value='';$('boardRemember').checked=false;authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}
+ async function afterEnter(){user=check(await db.auth.getUser()).user;$('boardPassword').value='';$('boardRemember').checked=false;await checkAdmin();authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}
  $('boardLogin').onclick=async()=>{try{status('입장하는 중…');await connect();const {email}=nickInfo();const r=await db.auth.signInWithPassword({email,password:$('boardPassword').value});if(r.error)throw authErr(r.error);await afterEnter();logEvent('login')}catch(e){err(e)}};
  $('boardSignup').onclick=async()=>{try{status('확인하는 중…');await connect();const {display,email}=nickInfo(),password=$('boardPassword').value;
   if(password.length<6)throw Error('비밀번호를 6자 이상으로 정해 주세요.');
@@ -1344,10 +1396,10 @@ commit;
  $('boardPublish').onclick=async()=>{
   if(busy)return;busy=true;$('boardPublish').disabled=true;
   try{await requireUser();const title=$('boardTitle').value.trim(),nickname=$('boardNick').value.trim(),description=$('boardDescription').value.trim();if(!title||!nickname)throw Error('작품 제목과 별명을 적어 주세요.');
-   if(!$('boardConsent').checked)throw Error('회원 공개 및 사본 편집 허용에 체크해 주세요.');
+   if(!$('boardConsent').checked)throw Error('저작권 안내를 읽고 확인 칸에 체크해 주세요.');
    const score=safeScore(window.ComposerBoard.get());if(!score.notes.length&&!score.accomp.length&&!score.harmony.length&&!score.rhythm.length)throw Error('먼저 음이나 리듬을 찍어 주세요.');
    if(new TextEncoder().encode(JSON.stringify(score)).length>280000)throw Error('작품 데이터가 너무 커요. 음 수를 줄여 주세요.');
-   check(await db.from('music_works').insert({title,nickname,description,score,source_id:sourceId}));logEvent('work_publish',{bars:score.bars,remix:!!sourceId});page=0;await refresh();status('작품을 올렸어요. WAV 음원은 업로드하지 않았어요.');
+   check(await db.from('music_works').insert({title,nickname,description,score,source_id:sourceId,...(CLASS?{class_code:CLASS}:{})}));logEvent('work_publish',{bars:score.bars,remix:!!sourceId});page=0;await refresh();status('작품을 올렸어요. WAV 음원은 업로드하지 않았어요.');
   }catch(e){err(e)}finally{busy=false;$('boardPublish').disabled=false}
  };
  $('boardRefresh').onclick=()=>{openedId=null;refresh().catch(err)};
