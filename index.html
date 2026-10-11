@@ -123,6 +123,10 @@
     .help-shade.tutorial .help-card{pointer-events:auto;border:2px solid #91b7ba}
     #tutorialProgress{width:100%;height:8px;accent-color:#6a969b}
     #tutorialNotice{font-size:13px;line-height:1.6}
+    .step.lesson-guide{outline:2px dashed #547c91;outline-offset:-3px}
+    .step.lesson-guide::after{content:'•';color:#547c91;font-size:16px}
+    .step.lesson-hold::after{content:'→'}
+    #lessonFeedback{font-size:13px;line-height:1.5;color:#345a68}
     .help-focus{position:relative!important;z-index:1001!important;outline:3px solid #6c8eb1!important;outline-offset:4px!important;background:#fff!important;border-radius:6px}
     .help-card{position:fixed;z-index:1002;width:min(360px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e5ea;box-shadow:0 14px 42px rgba(25,32,45,.2);border-radius:14px;padding:17px}
     .help-card h2{font-size:18px;margin:6px 0 10px}
@@ -346,7 +350,7 @@
       <div class="small-actions"><button id="moveUp">한 음 ↑</button><button id="moveDown">한 음 ↓</button><button id="octaveUp">옥타브 ↑</button><button id="octaveDown">옥타브 ↓</button></div>
       <p class="hint">현재 조의 음계를 따라 이동해요. 음이 범위의 경계에 걸쳐 있으면 그 음 전체가 이동합니다. 잠긴 반주는 보호됩니다.</p><p id="moveStatus" role="status"></p>
     </details>
-    <details class="drawer-section"><summary>파트별 듣기</summary>
+    <details id="tutorialMixer" class="drawer-section"><summary>파트별 듣기</summary>
       <p class="hint">화음은 점선 테두리, 반주는 회색으로 보여요. 재생 중에도 음량을 바꿀 수 있어요.</p><p class="hint">이전 버전 파일에 멜로디와 합쳐 저장된 화음은 자동으로 분리되지 않아요. 새 예시곡은 화음 파트를 따로 조절할 수 있어요.</p>
 <div class="mixer-row"><label for="volume_melody">멜로디</label><input id="volume_melody" type="range" min="0" max="100" value="100" aria-label="멜로디 음량"><output id="volumeLabel_melody">100%</output><label class="mute-label"><input id="mute_melody" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_harmony">화음</label><input id="volume_harmony" type="range" min="0" max="100" value="75" aria-label="화음 음량"><output id="volumeLabel_harmony">75%</output><label class="mute-label"><input id="mute_harmony" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_accomp">반주</label><input id="volume_accomp" type="range" min="0" max="100" value="65" aria-label="반주 음량"><output id="volumeLabel_accomp">65%</output><label class="mute-label"><input id="mute_accomp" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_rhythm">리듬</label><input id="volume_rhythm" type="range" min="0" max="100" value="65" aria-label="리듬 음량"><output id="volumeLabel_rhythm">65%</output><label class="mute-label"><input id="mute_rhythm" type="checkbox">음소거</label></div>
     </details>
@@ -425,6 +429,13 @@
     <h2 id="helpTitle"></h2><p id="helpBody"></p><div id="helpDemo" class="mini-demo"></div>
     <p id="tutorialNotice" class="hint" hidden>강조된 곳을 직접 눌러 보세요. 해 본 뒤 「다음」을 누르면 돼요. 건너뛰어도 괜찮아요.</p>
     <progress id="tutorialProgress" aria-label="튜토리얼 진행률" hidden></progress>
+    <p id="lessonFeedback" role="status" hidden></p>
+    <button id="lessonAssist" type="button" hidden>이번 마디 완성 도와주기</button>
+    <div id="lessonOffer" hidden>
+      <p>시작하면 지금 작업을 임시저장하고, 다장조 · 3옥타브 · 12마디 · 4박자 · 피아노 · BPM 120으로 새로 만들어요. 임시저장은 창을 닫거나 새로고침하면 사라져요.</p>
+      <button id="lessonStart" type="button" class="primary">네, 이어서 만들기</button>
+      <button id="lessonSkip" type="button">지금은 마칠게요</button>
+    </div>
     <div class="help-nav"><button id="helpPrev" type="button">← 이전</button><span id="helpPosition"></span><button id="helpNext" type="button" class="primary">다음 →</button></div>
   </div>
 </div>
@@ -606,7 +617,7 @@
     drums.forEach((dr,i)=>row(dr,['#b9c1cb','#b9c1cb','#b9c1cb'][i],i,true));
     colCells=Array.from({length:n},()=>[]);wrap.querySelectorAll('.step[data-col]').forEach(e=>colCells[Number(e.dataset.col)]?.push(e));
     gridGeom={label:all.some(isChromatic)?108:72,width,gap:2};
-    $('grid').replaceChildren(wrap);commitHistory();
+    $('grid').replaceChildren(wrap);commitHistory();paintLessonGuide();
   }
   $('grid').addEventListener('pointerdown',e=>{
     const b=e.target.closest?.('[data-row][data-col]');if(!b||e.button!==0)return;
@@ -1140,26 +1151,34 @@
     {target:'#save',title:'작품을 저장하고 공유해요',body:'「파일로 저장」은 작곡 내용을 JSON 파일로 내려받아요. 「공유 코드」는 친구에게 보낼 문자를 만들어 줍니다. 연주 전에 재생 버튼도 눌러 보세요!',demo:'💾 저장  ·  🔗 공유 코드  ·  ▶ 재생'}
   ];
   const tutorialSteps=[
-    {target:'#editTrack',title:'① 멜로디부터 만들어 볼까요?',body:'「찍을 칸」을 멜로디로 골라 주세요. 지금 만든 곡은 그대로 두고 연습할 수 있어요. 새 곡이나 예시를 불러오기 전에는 임시저장부터 해 주세요.',demo:'멜로디 선택 → 다음'},
-    {target:'#grid .step[data-row][data-col="0"]',title:'② 네모를 눌러 첫 음을 찍어요',body:'강조된 칸을 누르거나 다른 높이의 빈 칸을 눌러 보세요. 색이 생기면 음이 들어갔어요! 이미 색이 있는 칸은 다시 누르면 지워져요.',demo:'왼쪽은 음 높이 · 오른쪽으로 갈수록 나중에 연주해요'},
-    {target:'#grid .step[data-row][data-col="0"]',title:'③ 옆으로 쭉 밀어 긴 음을 만들어요',body:'빈 칸을 누른 채 같은 높이에서 오른쪽으로 밀어 보세요. 한 박을 나누지 않은 상태에서는 두 칸이 2분음표, 네 칸이 온음표 길이예요.',demo:'<span class="demo-on"></span><span class="demo-hold"></span><span class="demo-hold"></span><span class="demo-hold"></span> 한 번 길게!'},
-    {target:'#play',title:'④ 내가 만든 소리를 들어요',body:'재생을 누르고 들어 보세요. 멈추려면 바로 옆 정지를 누르면 돼요. 첫 재생은 악기 음원을 불러오느라 조금 걸릴 수 있어요.',demo:'▶ 재생 → 들어 보기 → ■ 정지'},
-    {target:'#undo',title:'⑤ 실수해도 괜찮아요',body:'실행 취소를 누르면 직전 수정으로 돌아가요. 비활성화되어 있다면 아직 되돌릴 수정이 없는 거예요. 다시 실행으로 취소한 수정을 되살릴 수도 있어요.',demo:'Ctrl/Cmd + Z · 실행 취소'},
-    {target:'#divide',title:'⑥ 더 짧은 음도 찍어 봐요',body:'한 박 나누기를 반으로 바꾸면 8분음표, 반의 반으로 바꾸면 16분음표 위치에 음을 넣을 수 있어요. 설정을 바꿔 보고 다음 단계에서 악보를 확인해 보세요.',demo:'한 박: □ → 반으로: □□ → 반의 반: □□□□'},
-    {target:'#grid',title:'⑦ 리듬도 넣어 볼까요?',body:'악보 아래의 큰북·작은북·하이햇 칸을 찾아 눌러 보세요. 음을 찍는 것과 같은 방법이에요. 반주가 잠겨 있어도 리듬은 바꿀 수 있어요.',demo:'아래로 스크롤 → 리듬 칸 클릭 → 재생'},
-    {target:'#tempSave',title:'⑧ 다른 곡을 넣기 전에 임시저장!',body:'임시저장을 눌러 지금 버전을 남겨 주세요. 이 목록은 새로고침하거나 창을 닫으면 사라져요. 나중에도 보관하려면 파일로 저장해야 해요.',demo:'▣ 임시저장 → 현재 작업을 잠깐 보관'},
-    {target:'#example',title:'⑨ 예시곡이나 머니코드를 골라요',body:'작은별·나비야·캐논 또는 머니코드를 골라 보세요. 예시 불러오기를 누르면 현재 곡이 바뀌니 확인 안내를 읽어 주세요. 머니코드는 반주 형태도 고를 수 있어요. 지금 곡을 유지하려면 불러오지 않고 다음으로 가도 돼요.',demo:'예시 선택 → 예시 불러오기 → 변경 안내 확인'},
-    {target:'#lockAccomp',title:'⑩ 반주는 잠그고 가락을 만들어요',body:'반주 잠금을 켜면 회색 반주 칸을 보호할 수 있어요. 「찍을 칸」을 멜로디로 두고 가락을 만들어 보세요. 화음을 선택하면 다른 성부도 더할 수 있어요.',demo:'🔒 반주 잠금 → 멜로디 또는 화음 찍기'},
-    {target:'.copy-tools',title:'⑪ 마음에 드는 마디를 복사해요',body:'복사할 시작·끝 마디를 정하고 마디 복사를 눌러요. 붙여넣을 시작 마디를 정한 뒤 붙여넣으세요. 그 위치의 내용이 바뀌므로 필요하면 먼저 임시저장해요.',demo:'1~2마디 복사 → 3마디부터 붙여넣기'},
-    {target:'#loop',title:'⑫ 한 부분을 반복해서 다듬어요',body:'시작·끝 마디를 정하고 선택 마디 반복을 켠 다음 재생하세요. 그 부분을 여러 번 듣고 음을 바꿔 보세요. 다음으로 가기 전에 정지를 눌러 주세요.',demo:'반복 구간 정하기 → 반복 켜기 → 재생'},
-    {target:'#save',title:'⑬ 다음 시간에도 이어 만들려면',body:'파일로 저장을 눌러 작곡 파일(JSON)을 내려받아요. 다음에 작곡 파일 불러오기로 이어 만들 수 있어요. 임시저장만 하고 창을 닫으면 작업을 잃을 수 있어요.',demo:'💾 파일로 저장 → 내려받은 JSON 보관'},
-    {target:'#exportAudio',title:'⑭ 완성한 곡을 음원으로 저장해요',body:'WAV 오디오로 저장을 누르면 지금의 악기·빠르기·파트별 음량으로 소리 파일을 만들어요. 음소거한 파트는 음원에서도 빠져요.',demo:'WAV = 듣는 파일 · JSON = 다시 편집할 파일'},
-    {target:'#openBoard',title:'⑮ 친구들과 나눌 준비가 됐어요!',body:'튜토리얼을 마친 뒤 작품마당을 열어 보세요. 선생님이 준 학급 링크로 들어왔다면 그 학급 공간에서 작품을 나눌 수 있어요. 학급 코드는 반 밖에 공개하지 말고, 다른 곡을 사용했다면 저작권 안내도 읽어 주세요.',demo:'완료 → 작품마당 → 감상 · 좋아요 · 사본으로 편집'}
+    {target:'#editTrack',title:'멜로디부터 만들어 볼까요?',body:'「찍을 칸」을 멜로디로 골라 주세요. 지금 만든 곡은 그대로 두고 연습할 수 있어요. 새 곡이나 예시를 불러오기 전에는 임시저장부터 해 주세요.',demo:'멜로디 선택 → 다음'},
+    {target:'#grid .step[data-row][data-col="0"]',title:'네모를 눌러 첫 음을 찍어요',body:'강조된 칸을 누르거나 다른 높이의 빈 칸을 눌러 보세요. 색이 생기면 음이 들어갔어요! 이미 색이 있는 칸은 다시 누르면 지워져요.',demo:'왼쪽은 음 높이 · 오른쪽으로 갈수록 나중에 연주해요'},
+    {target:'#grid .step[data-row][data-col="0"]',title:'옆으로 쭉 밀어 긴 음을 만들어요',body:'빈 칸을 누른 채 같은 높이에서 오른쪽으로 밀어 보세요. 한 박을 나누지 않은 상태에서는 두 칸이 2분음표, 네 칸이 온음표 길이예요.',demo:'<span class="demo-on"></span><span class="demo-hold"></span><span class="demo-hold"></span><span class="demo-hold"></span> 한 번 길게!'},
+    {target:'#play',title:'내가 만든 소리를 들어요',body:'재생을 누르고 들어 보세요. 멈추려면 바로 옆 정지를 누르면 돼요. 첫 재생은 악기 음원을 불러오느라 조금 걸릴 수 있어요.',demo:'▶ 재생 → 들어 보기 → ■ 정지'},
+    {target:'#undo',title:'실수해도 괜찮아요',body:'실행 취소를 누르면 직전 수정으로 돌아가요. 비활성화되어 있다면 아직 되돌릴 수정이 없는 거예요. 다시 실행으로 취소한 수정을 되살릴 수도 있어요.',demo:'Ctrl/Cmd + Z · 실행 취소'},
+    {target:'.controls',title:'설정에서 악기와 악보 크기를 골라요',body:'음색을 피아노나 마림바로 바꿔 보세요. 옥타브는 찍을 수 있는 음 높이의 범위, 마디는 곡의 길이예요. 박자는 한 마디에 들어갈 박 수예요. 옥타브나 마디를 줄이면 범위 밖 음이 사라질 수 있으니, 먼저 임시저장해 주세요.',demo:'음색 · 옥타브 · 2/3/4박자 · 마디 수'},
+    {target:'#key',title:'조표와 반음도 설정할 수 있어요',body:'조표를 바꾸면 조 이름과 시작음이 함께 바뀌어요. 예를 들어 파♯을 고르면 사장조, 시작음은 솔이에요. 추가할 반음 선택에서는 필요한 도♯/레♭ 같은 음을 더할 수 있어요. 처음에는 다장조 그대로 연습해도 괜찮아요.',demo:'조표 선택 → 조 이름 확인 → 필요한 반음 추가'},
+    {target:'#tempoNumber',title:'빠르기를 숫자로 바꿔 봐요',body:'빠르기 숫자 칸에 120을 입력해 보세요. 숫자가 작으면 느리게, 크면 빠르게 연주해요. 50부터 240까지 입력하거나 옆의 슬라이더를 움직일 수 있어요.',demo:'80: 천천히 · 120: 기본 · 160: 빠르게'},
+    {target:'#divide',title:'더 짧은 음도 찍어 봐요',body:'한 박 나누기를 반으로 바꾸면 8분음표, 반의 반으로 바꾸면 16분음표 위치에 음을 넣을 수 있어요. 설정을 바꿔 보고 다음 단계에서 악보를 확인해 보세요.',demo:'한 박: □ → 반으로: □□ → 반의 반: □□□□'},
+    {target:'#grid',title:'리듬도 넣어 볼까요?',body:'악보 아래의 큰북·작은북·하이햇 칸을 찾아 눌러 보세요. 음을 찍는 것과 같은 방법이에요. 반주가 잠겨 있어도 리듬은 바꿀 수 있어요.',demo:'아래로 스크롤 → 리듬 칸 클릭 → 재생'},
+    {target:'#tempSave',title:'다른 곡을 넣기 전에 임시저장!',body:'임시저장을 눌러 지금 버전을 남겨 주세요. 이 목록은 새로고침하거나 창을 닫으면 사라져요. 나중에도 보관하려면 파일로 저장해야 해요.',demo:'▣ 임시저장 → 현재 작업을 잠깐 보관'},
+    {target:'#example',title:'예시곡이나 머니코드를 골라요',body:'작은별·나비야·캐논 또는 머니코드를 골라 보세요. 예시 불러오기를 누르면 현재 곡이 바뀌니 확인 안내를 읽어 주세요. 머니코드는 반주 형태도 고를 수 있어요. 지금 곡을 유지하려면 불러오지 않고 다음으로 가도 돼요.',demo:'예시 선택 → 예시 불러오기 → 변경 안내 확인'},
+    {target:'#lockAccomp',title:'반주는 잠그고 가락을 만들어요',body:'반주 잠금을 켜면 회색 반주 칸을 보호할 수 있어요. 「찍을 칸」을 멜로디로 두고 가락을 만들어 보세요. 화음을 선택하면 다른 성부도 더할 수 있어요.',demo:'🔒 반주 잠금 → 멜로디 또는 화음 찍기'},
+    {target:'#tutorialMixer',title:'파트별로 음량을 바꾸고 따로 들어요',body:'멜로디·화음·반주·리듬의 슬라이더를 움직여 음량을 조절해 보세요. 음소거에 체크하면 그 파트만 잠깐 꺼져요. 멜로디를 끄고 반주에 맞춰 노래하거나, 반주를 끄고 가락과 화음만 들어 볼 수 있어요. 체크를 풀면 다시 들려요.',demo:'재생 → 파트별 음량 조절 · 음소거 → 차이 들어 보기'},
+    {target:'.copy-tools',title:'마음에 드는 마디를 복사해요',body:'복사할 시작·끝 마디를 정하고 마디 복사를 눌러요. 붙여넣을 시작 마디를 정한 뒤 붙여넣으세요. 그 위치의 내용이 바뀌므로 필요하면 먼저 임시저장해요.',demo:'1~2마디 복사 → 3마디부터 붙여넣기'},
+    {target:'#loop',title:'한 부분을 반복해서 다듬어요',body:'시작·끝 마디를 정하고 선택 마디 반복을 켠 다음 재생하세요. 그 부분을 여러 번 듣고 음을 바꿔 보세요. 다음으로 가기 전에 정지를 눌러 주세요.',demo:'반복 구간 정하기 → 반복 켜기 → 재생'},
+    {target:'#save',title:'다음 시간에도 이어 만들려면',body:'파일로 저장을 눌러 작곡 파일(JSON)을 내려받아요. 다음에 작곡 파일 불러오기로 이어 만들 수 있어요. 임시저장만 하고 창을 닫으면 작업을 잃을 수 있어요.',demo:'💾 파일로 저장 → 내려받은 JSON 보관'},
+    {target:'#exportAudio',title:'완성한 곡을 음원으로 저장해요',body:'WAV 오디오로 저장을 누르면 지금의 악기·빠르기·파트별 음량으로 소리 파일을 만들어요. 음소거한 파트는 음원에서도 빠져요.',demo:'WAV = 듣는 파일 · JSON = 다시 편집할 파일'},
+    {target:'#openBoard',title:'친구들과 나눌 준비가 됐어요!',body:'튜토리얼을 마친 뒤 작품마당을 열어 보세요. 선생님이 준 학급 링크로 들어왔다면 그 학급 공간에서 작품을 나눌 수 있어요. 학급 코드는 반 밖에 공개하지 말고, 다른 곡을 사용했다면 저작권 안내도 읽어 주세요.',demo:'완료 → 작품마당 → 감상 · 좋아요 · 사본으로 편집'}
   ];
   let helpIndex=0,helpTarget=null,tutorialMode=false,helpReturn=null;
+  let lessonMode=false,lessonSteps=[],lessonScore=null;
   let drawerBeforeHelp=false,detailsBeforeHelp=[];
-  const activeHelpSteps=()=>tutorialMode?tutorialSteps:helpSteps;
+  const activeHelpSteps=()=>lessonMode?lessonSteps:tutorialMode?tutorialSteps:helpSteps;
   function closeHelp(){
+    lessonMode=false;clearLessonGuide();$('lessonOffer').hidden=true;
+    $('lessonAssist').hidden=true;$('lessonFeedback').hidden=true;
+    document.querySelector('#helpCard .help-nav').hidden=false;
     $('helpShade').classList.remove('show','tutorial');$('helpShade').setAttribute('aria-hidden','true');
     $('toolDrawer').classList.remove('helping');setDrawer(drawerBeforeHelp);
     detailsBeforeHelp.forEach(([detail,open])=>{detail.open=open});
@@ -1182,16 +1201,20 @@
     const steps=activeHelpSteps();
     helpIndex=Math.max(0,Math.min(steps.length-1,index));
     helpTarget?.classList.remove('help-focus');const step=steps[helpIndex];
+    if(lessonMode&&step.track){$('editTrack').value=step.track;lock(false);$('selectMode').value='draw';}
     helpTarget=document.querySelector(step.target);
     const detail=helpTarget?.closest?.('details');if(detail)detail.open=true;
     const inDrawer=!!helpTarget&&$('toolDrawer').contains(helpTarget);
     setDrawer(inDrawer);$('toolDrawer').classList.toggle('helping',inDrawer);
     if(helpTarget){helpTarget.classList.add('help-focus');helpTarget.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'})}
-    $('helpTitle').textContent=step.title;$('helpBody').textContent=step.body;$('helpDemo').innerHTML=step.demo;
-    $('helpCounter').textContent=(tutorialMode?'따라 하기 ':'도움말 ')+(helpIndex+1)+' / '+steps.length;
+    $('helpTitle').textContent=tutorialMode?(helpIndex+1)+'. '+step.title:step.title;$('helpBody').textContent=step.body;$('helpDemo').innerHTML=step.demo;
+    $('helpCounter').textContent=(lessonMode?'작은별 만들기 ':tutorialMode?'따라 하기 ':'도움말 ')+(helpIndex+1)+' / '+steps.length;
     $('helpPosition').textContent=(helpIndex+1)+' / '+steps.length;
     $('helpPrev').disabled=helpIndex===0;$('helpNext').textContent=helpIndex===steps.length-1?'완료':'다음 →';
     $('tutorialProgress').max=steps.length;$('tutorialProgress').value=helpIndex+1;
+    $('lessonAssist').hidden=!lessonMode||!step.track;
+    $('lessonFeedback').hidden=!lessonMode; $('lessonFeedback').textContent='';
+    paintLessonGuide();
     requestAnimationFrame(positionHelp);
   }
   function openHelp(tutorial,trigger){
@@ -1199,6 +1222,8 @@
       drawerBeforeHelp=$('toolDrawer').classList.contains('open');
       detailsBeforeHelp=Array.from($('toolDrawer').querySelectorAll('details'),detail=>[detail,detail.open]);
     }
+    lessonMode=false;clearLessonGuide();$('lessonOffer').hidden=true;
+    document.querySelector('#helpCard .help-nav').hidden=false;
     helpReturn=trigger;tutorialMode=tutorial;
     $('tutorialNotice').hidden=!tutorial;$('tutorialProgress').hidden=!tutorial;
     $('helpCard').setAttribute('aria-modal',String(!tutorial));
@@ -1206,13 +1231,99 @@
     $('helpShade').classList.add('show');$('helpShade').setAttribute('aria-hidden','false');
     showHelp(0);$('helpClose').focus();
   }
+  function clearLessonGuide(){
+    document.querySelectorAll('.lesson-guide').forEach(e=>e.classList.remove('lesson-guide','lesson-hold'));
+  }
+  function lessonSettingsMatch(){
+    return Number(octSel.value)===3&&Number(barsSel.value)===12&&Number(beatsSel.value)===4&&divide()===1&&keySel.value==='none'&&chromatics.length===0;
+  }
+  function lessonRegion(list,bar){return list.filter(k=>{const c=Number(k.split(':')[1]);return c>=bar*4&&c<(bar+1)*4}).sort()}
+  function lessonBarMatches(step){
+    if(!lessonSettingsMatch())return false;
+    const [starts,held]=step.track==='melody'?[notes,holds]:[accomp,accompHolds];
+    const [sn,hn]=step.track==='melody'?['notes','holds']:['accomp','accompHolds'];
+    return JSON.stringify(lessonRegion([...starts],step.bar))===JSON.stringify(lessonRegion(lessonScore[sn],step.bar))&&
+      JSON.stringify(lessonRegion([...held],step.bar))===JSON.stringify(lessonRegion(lessonScore[hn],step.bar));
+  }
+  function paintLessonGuide(){
+    clearLessonGuide();
+    if(!lessonMode||!lessonScore||!lessonSettingsMatch())return;
+    const step=lessonSteps[helpIndex];if(!step?.track)return;
+    const sn=step.track==='melody'?'notes':'accomp',hn=step.track==='melody'?'holds':'accompHolds';
+    for(const [list,held] of [[lessonScore[sn],false],[lessonScore[hn],true]])for(const k of lessonRegion(list,step.bar)){
+      const [r,c]=k.split(':');const cell=$('grid').querySelector(`[data-row="${r}"][data-col="${c}"]`);
+      cell?.classList.add('lesson-guide');if(held)cell?.classList.add('lesson-hold');
+    }
+  }
+  function offerLesson(){
+    helpTarget?.classList.remove('help-focus');helpTarget=$('tutorialButton');setDrawer(false);
+    $('toolDrawer').classList.remove('helping');
+    $('helpTitle').textContent='기본 튜토리얼을 마쳤어요!';
+    $('helpBody').textContent='작은별 멜로디와 간단한 반주를 만들어서 곡을 완성해봅시다. 이어서 진행할까요?';
+    $('helpDemo').innerHTML='멜로디 12마디 + 코드를 한꺼번에 연주하는 반주';
+    $('tutorialNotice').hidden=true;$('tutorialProgress').hidden=true;
+    document.querySelector('#helpCard .help-nav').hidden=true;$('lessonOffer').hidden=false;
+    requestAnimationFrame(positionHelp);$('lessonStart').focus();
+  }
+  function startLesson(){
+    $('tempSave').onclick();stop();
+    lessonMode=false;
+    const blank={...state(),octaves:3,bars:12,beats:4,divide:1,key:'none',chromatics:[],instrument:'piano',tempo:120,
+      notes:[],holds:[],accomp:[],accompHolds:[],harmony:[],harmonyHolds:[],rhythm:[],locked:false,
+      mix:{melody:100,harmony:75,accomp:55,rhythm:65},muted:{melody:false,harmony:false,accomp:false,rhythm:false}};
+    apply(blank);previousDivide=1;looping=false;repeatAll=false;
+    $('loop').setAttribute('aria-pressed','false');$('loop').textContent='↻ 선택 마디 반복: 꺼짐';
+    $('repeatAll').setAttribute('aria-pressed','false');$('repeatAll').textContent='🔁 반복재생: 꺼짐';setStartBar(1);
+    lessonScore=exampleState('twinkle_accomp');
+    lessonSteps=[];
+    for(const track of ['melody','accomp'])for(let bar=0;bar<12;bar++){
+      const sn=track==='melody'?'notes':'accomp';
+      const first=lessonRegion(lessonScore[sn],bar)[0].split(':');
+      const syllables=twinkle.slice(bar*4,bar*4+4).map(n=>n===null?'앞 음 이어서':names[cMajorDegree[n]]+'5').join(' · ');
+      const [c1,c2]=songChords.twinkle[bar];
+      const chordNames={C:'C(도4·미4·솔4)',F:'F(도4·파4·라4)',G:'G(레4·솔4·시4)'};
+      lessonSteps.push({bar,track,target:`#grid .step[data-row="${first[0]}"][data-col="${first[1]}"]`,
+        title:(bar+1)+'마디 '+(track==='melody'?'멜로디':'코드반주')+'를 만들어요',
+        body:track==='melody'?'점선으로 표시된 칸에 음을 찍어 보세요. •는 음의 시작, →는 앞 음을 같은 높이에서 드래그해 이어 줄 칸이에요. 1~4박 순서: '+syllables+'.':'찍을 칸이 반주로 바뀌었어요. 같은 박의 세 음을 각각 찍고, → 칸까지 드래그해 주세요. 세 음이 함께 나는 코드반주예요. '+(c1===c2?'1박에 '+chordNames[c1]+'를 찍고 모두 4박까지 늘려 주세요.':'1박에 '+chordNames[c1]+'를 찍어 2박까지, 3박에 '+chordNames[c2]+'를 찍어 4박까지 늘려 주세요.'),
+        demo:track==='melody'?syllables:'1~2박 '+c1+' · 3~4박 '+c2});
+    }
+    lessonSteps.push({target:'#play',title:'완성한 작은별을 들어 봐요',body:'재생을 누르면 멜로디와 코드반주가 함께 들려요. 파트별 듣기에서 반주를 잠시 음소거해 차이도 느껴 보세요. 정지를 누른 뒤 다음으로 가세요.',demo:'작은별 12마디 완성! 멜로디 + C·F·G 코드반주'});
+    lessonSteps.push({target:'#save',title:'내 작품을 파일로 저장해요',body:'파일로 저장을 눌러 작은별 작곡 파일을 보관해 주세요. 완료 후에는 자유롭게 음색과 빠르기를 바꾸거나 WAV 음원으로 저장할 수도 있어요. 시작 전 작업은 임시저장 목록에서 복원할 수 있어요.',demo:'JSON 저장 → 완료 → 자유롭게 바꿔 보기'});
+    lessonMode=true;$('lessonOffer').hidden=true;
+    document.querySelector('#helpCard .help-nav').hidden=false;
+    $('tutorialNotice').hidden=false;$('tutorialProgress').hidden=false;
+    $('editStatus').textContent='이전 작업을 임시저장하고 작은별 만들기를 시작했어요. 점선 안내를 따라 한 마디씩 만들어 보세요.';
+    showHelp(0);
+  }
+  $('lessonStart').onclick=startLesson;$('lessonSkip').onclick=closeHelp;
+  $('lessonAssist').onclick=()=>{
+    const step=lessonSteps[helpIndex];if(!lessonMode||!step?.track)return;
+    if(!lessonSettingsMatch()){$('lessonFeedback').textContent='연습 설정을 3옥타브·12마디·4박자·나누기 없음·다장조로 되돌려 주세요.';return;}
+    stop();const [starts,held]=step.track==='melody'?[notes,holds]:[accomp,accompHolds];
+    const [sn,hn]=step.track==='melody'?['notes','holds']:['accomp','accompHolds'];
+    for(const [set,list] of [[starts,lessonScore[sn]],[held,lessonScore[hn]]]){
+      for(const k of lessonRegion([...set],step.bar))set.delete(k);
+      for(const k of lessonRegion(list,step.bar))set.add(k);
+    }
+    render();$('lessonFeedback').textContent='이번 마디를 완성했어요. 찍힌 음과 길이를 확인한 뒤 다음을 눌러 주세요.';
+  };
   $('helpButton').onclick=()=>{
     $('helpTeaser').classList.add('hidden');try{localStorage.setItem('composer_help_seen_v5','1')}catch(e){}
     openHelp(false,$('helpButton'));
   };
   $('tutorialButton').onclick=()=>openHelp(true,$('tutorialButton'));
   $('helpClose').onclick=closeHelp;
-  $('helpNext').onclick=()=>helpIndex===activeHelpSteps().length-1?closeHelp():showHelp(helpIndex+1);
+  $('helpNext').onclick=()=>{
+    if(lessonMode){
+      const step=lessonSteps[helpIndex];
+      if(step.track&&!lessonBarMatches(step)){
+        $('lessonFeedback').textContent='아직 안내와 다른 음이나 길이가 있어요. 점선 칸을 확인해 주세요. 어렵다면 이번 마디 완성 도와주기를 눌러도 돼요.';return;
+      }
+    }
+    if(helpIndex===activeHelpSteps().length-1){
+      if(tutorialMode&&!lessonMode)offerLesson();else closeHelp();
+    }else showHelp(helpIndex+1);
+  };
   $('helpPrev').onclick=()=>showHelp(helpIndex-1);
   $('helpShade').onclick=e=>{if(!tutorialMode&&e.target===$('helpShade'))closeHelp()};
   window.addEventListener('resize',positionHelp);
