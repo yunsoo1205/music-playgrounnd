@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!-- GitHub/Vercel: 아래 두 값만 Supabase 연결 시 입력하세요. 비밀 키/service_role 금지. -->
+<script>window.MUSIC_BOARD_CONFIG={url:"",key:""};</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>음악놀이터</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --border:#e6e8ed;
+      --accent:#303540;
+      --accent2:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, "Noto Sans KR", sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:24px;
+    }
+    h1{margin:0 0 8px;font-size:26px;letter-spacing:-.04em}
+    .subheading{color:#7c828d;margin:0 0 26px;font-size:14px}
+    .controls,.actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:end;
+      margin-bottom:16px;
+    }
+    label{
+      font-size:14px;
+      font-weight:700;
+    }
+    select,input[type="range"],input[type="text"],textarea,button{
+      font:inherit;
+    }
+    select,input[type="text"],textarea{
+      margin-top:6px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      background:#fff;
+    }
+    button{
+      min-height:44px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 14px;
+      background:#fff;
+      cursor:pointer;
+    }
+    button.primary{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+      font-weight:700;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:16px;
+      margin-bottom:16px;
+    }
+    .hint{
+      font-size:14px;
+      color:var(--muted);
+      margin-bottom:12px;
+    }
+    .step.playing{outline:3px solid #f59e0b;outline-offset:-2px}
+    .step{height:32px;min-height:32px;padding:0;border-radius:4px;cursor:pointer}
+    .step.on{box-shadow:inset 0 0 0 1px #505763}
+    .step.accomp{background:#cbd2dc!important;box-shadow:inset 0 0 0 1px #7c8799}
+    .step.locked{cursor:not-allowed}
+    .step.both{background:linear-gradient(135deg,var(--melody-color) 50%,#cbd2dc 50%)!important}
+    .row-label{min-height:32px;height:32px;padding:0 3px;font-size:12px;font-weight:700}
+    .compose-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:0 0 16px}
+    .compose-tools label{display:block}
+    .copy-tools{padding:12px 14px;border:1px solid #e6e8ed;border-radius:12px;background:#fff;align-items:center}
+    .copy-tools strong{font-size:14px;color:#46505e}
+    .copy-tools .hint{flex-basis:100%}
+    .compose-tools select,.compose-tools input{margin-top:6px}
+    .compose-tools input[type="number"]{width:72px}
+    #lockAccomp[aria-pressed="true"]{background:#f3f4f6;border-color:#aab0ba}
+    #loop[aria-pressed="true"]{background:#e9eef4;border-color:#8d9cad}
+    .help-note{font-size:13px;color:#68707b;line-height:1.5;margin:4px 0 0}
+    .tempo-control{display:flex;align-items:center;gap:10px;min-height:44px}
+    #tempoNumber{width:72px;height:42px;margin:0;text-align:center}
+    .examples{padding:14px 16px}
+    .key-status{font-size:12px;color:#57616e;font-weight:500;margin-top:6px}
+    #moneyStyleWrap[hidden]{display:none}
+    #moneyStyleWrap{min-width:245px}
+    .example-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .example-controls select{margin:0;min-width:270px;flex:1}
+    .examples .hint{margin:8px 0 0}
+    .step.held{position:relative;border-left-color:transparent!important;border-radius:0;box-shadow:none}
+    .step.held::before{content:'';position:absolute;left:-3px;top:0;bottom:0;width:3px;background:inherit}
+    .step.held.on{border-top-color:#cbd2dc;border-bottom-color:#cbd2dc}
+    #grid .step[data-row]{touch-action:none;user-select:none}
+    .help-teaser{display:inline-flex;align-items:center;min-height:38px;color:#536070;font-size:13px;background:#f5f7fa;border:1px solid #e1e5ec;border-radius:9px;padding:6px 10px}
+    .help-teaser::before{content:'↖';margin-right:7px;font-size:20px;color:#8290a3}
+    .help-teaser.hidden{display:none}
+    .help-shade{position:fixed;inset:0;background:rgba(26,35,48,.38);z-index:1000;display:none}
+    .help-shade.show{display:block}
+    .help-focus{position:relative!important;z-index:1001!important;outline:3px solid #6c8eb1!important;outline-offset:4px!important;background:#fff!important;border-radius:6px}
+    .help-card{position:fixed;z-index:1002;width:min(360px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e5ea;box-shadow:0 14px 42px rgba(25,32,45,.2);border-radius:14px;padding:17px}
+    .help-card h2{font-size:18px;margin:6px 0 10px}
+    .help-card p{color:#4c5665;line-height:1.55;font-size:14px}
+    .help-card .mini-demo{border:1px solid #e7e9ed;border-radius:9px;padding:10px;margin:12px 0;color:#5c6c7c;font-size:13px;background:#f8fafb}
+    .help-card .mini-demo span{display:inline-block;width:18px;height:18px;border:1px solid #d6dbe1;border-radius:3px;vertical-align:middle;margin:0 2px;background:#fff}
+    .help-card .mini-demo .demo-on{background:#91b7ba;border-color:#91b7ba}
+    .help-card .mini-demo .demo-hold{background:#91b7ba;border-left:0;border-color:#91b7ba}
+    .help-card .mini-demo .demo-back{background:#cbd2dc;border-color:#cbd2dc}
+    .help-nav{display:flex;align-items:center;gap:7px;justify-content:space-between;margin-top:14px}
+    .help-nav button{min-height:38px;padding:6px 12px}
+    .help-nav span{font-size:12px;color:#818a96}
+    @media(max-width:640px){.help-card{bottom:12px!important;top:auto!important;left:12px!important}}
+    .scroll{
+      overflow-x:auto;
+      padding-bottom:8px;
+    }
+    #grid{
+      min-width:max-content;
+    }
+    .share-panel{
+      display:none;
+    }
+    .share-panel.show{
+      display:block;
+    }
+    .share-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .share-row input{
+      flex:1;
+      min-width:240px;
+      margin-top:0;
+    }
+    textarea{
+      width:100%;
+      min-height:80px;
+      resize:vertical;
+    }
+    .msg{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    @media (max-width:600px){
+      .wrap{padding:14px}
+    }
+
+    .workspace-main{max-width:100%;padding-top:10px}
+    .main-actions{align-items:center;margin-bottom:12px}
+    .main-actions select{margin:0;min-width:110px}
+    .drawer-toggle{position:fixed;top:16px;right:18px;z-index:902;background:#303540;color:#fff;border-color:#303540;box-shadow:0 3px 16px #26324422}
+    .drawer-backdrop{position:fixed;inset:0;background:#1f293755;z-index:900}
+    .drawer-backdrop[hidden]{display:none}
+    .tool-drawer{position:fixed;right:0;top:0;bottom:0;width:min(390px,100vw);background:#fff;border-left:1px solid #e3e7ed;box-shadow:-10px 0 30px #1f29371c;z-index:901;overflow-y:auto;padding:18px;transform:translateX(105%);visibility:hidden;transition:transform .22s,visibility .22s}
+    .tool-drawer.open{transform:translateX(0);visibility:visible}
+    .tool-drawer.helping{z-index:1001}
+    .drawer-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;font-size:18px;padding-right:130px}
+    .drawer-head button{min-height:36px;padding:5px 9px}
+    .drawer-section{border-top:1px solid #e9ebef;padding:18px 0 6px}
+    .drawer-section h2{font-size:15px;margin:0 0 12px;color:#4b5563}
+    .tool-drawer .controls,.tool-drawer .compose-tools{display:flex;flex-direction:column;align-items:stretch;gap:13px}
+    .tool-drawer .controls label,.tool-drawer .compose-tools label{width:100%}
+    .tool-drawer select{width:100%;min-width:0}
+    .tool-drawer .example-controls{display:flex;flex-direction:column}
+    .tool-drawer .example-controls select{min-width:0}
+    .tool-drawer .copy-tools{align-items:stretch}
+    .tool-drawer .actions{align-items:stretch;gap:8px}
+    .example-confirm{background:#f5f7fa;border:1px solid #d9e0e9;padding:12px;border-radius:10px;margin-top:10px}
+    .example-confirm[hidden]{display:none}
+    .example-confirm p{font-size:14px;line-height:1.5;margin:0 0 10px}
+    .example-confirm button{margin:0 5px 4px 0}
+    .temp-warning{font-size:12px;color:#68717d;margin:-3px 0 12px;line-height:1.5}
+    .temp-panel{border:1px solid #e6e8ed;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px}
+    .temp-panel p{color:#68717d;line-height:1.5;margin:7px 0}
+    .temp-item{display:flex;align-items:center;gap:5px;border-top:1px solid #edf0f3;padding:7px 0}
+    .temp-item span{flex:1;min-width:0}
+    .temp-item button{min-height:32px;padding:5px 8px;font-size:12px}
+    #tempStatus{font-size:12px;color:#4f6175;margin-top:8px}
+    @media(max-width:640px){.drawer-toggle{top:8px;right:8px}.wrap{padding-top:58px}.drawer-head{padding-right:120px}}
+
+    button:disabled{opacity:.42;cursor:default}
+    .drawer-section summary{font-weight:700;cursor:pointer;font-size:15px;padding:2px 0 12px;color:#46505e}
+    .drawer-section label{display:block;margin-bottom:10px}
+    .drawer-section input[type="number"]{display:block;width:100%;max-width:140px;padding:8px;border:1px solid #e6e8ed;border-radius:8px;margin-top:6px;font:inherit}
+    .field-pair{display:flex;gap:10px}.field-pair>label{flex:1;min-width:0}
+    .small-actions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+    .mixer-row{display:grid;grid-template-columns:44px minmax(60px,1fr) 38px 70px;gap:6px;align-items:center;margin:12px 0}
+    .mixer-row label{font-size:12px;margin:0}.mixer-row input[type="range"]{width:100%;min-width:0}.mixer-row output{font-size:12px;text-align:right}
+    .mixer-row .mute-label{white-space:nowrap}.check-label{font-size:14px}
+    .edit-status:empty{display:none}.edit-status{font-size:13px;color:#506276;margin:5px 0 12px}
+    .step.harmony{border-style:dashed!important}.step.selected{outline:2px solid #597a99;outline-offset:-2px}
+    .file-picker{font-size:13px!important;width:100%}.file-picker input{display:block;width:100%;margin-top:8px}
+    [role="status"]{font-size:13px;line-height:1.5}
+  
+ #boardPanel{position:fixed;inset:12px;z-index:2000;background:#fafbfc;border:1px solid #dce0e6;border-radius:18px;overflow:auto;padding:24px;box-shadow:0 12px 60px #26364a30}
+ #boardPanel[hidden],#boardPanel [hidden]{display:none!important}
+ .board-inner{max-width:1050px;margin:auto}.board-top{display:flex;justify-content:space-between;align-items:center;gap:16px}.board-box{border:1px solid #e1e5eb;border-radius:12px;background:white;padding:16px;margin:16px 0}
+ #boardCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.work-card{padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:white;overflow-wrap:anywhere}.work-card h3{margin:0 0 8px}.work-controls{display:flex;flex-wrap:wrap;gap:7px}.work-controls button{font-size:13px}
+ .board-fields{display:flex;gap:12px;flex-wrap:wrap}.board-fields label{flex:1;min-width:180px}.board-fields input,.board-fields textarea{width:100%;box-sizing:border-box}.board-fields textarea{min-height:70px}#boardStatus{min-height:26px;color:#405d79}#boardLink{width:100%}
+ @media(max-width:600px){#boardPanel{inset:4px;padding:14px}}
+  .chromatic-controls{border:1px solid #e0e3e8;border-radius:10px;padding:12px;flex-basis:100%;min-width:0}.chromatic-controls label{display:inline-flex;align-items:center;gap:5px;background:#f2f3f5;border:1px solid #dfe2e7;border-radius:7px;padding:8px;margin:3px;font-size:13px}.chromatic-label{font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>음악놀이터</h1>
+  <p class="subheading">음을 찍고, 반주를 넣고, 바로 들어 보세요.</p>
+
+  <button id="drawerToggle" class="drawer-toggle" type="button" aria-controls="toolDrawer" aria-expanded="false">☰ 다양한 기능</button>
+  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
+  <div class="workspace-main">
+  <div class="actions main-actions">
+    <button id="play" class="primary">▶ 재생</button>
+    <button id="stop">■ 정지</button>
+    <button id="undo" type="button" title="Ctrl/Cmd+Z" disabled>↶ 실행 취소</button>
+    <button id="redo" type="button" title="Ctrl/Cmd+Shift+Z" disabled>↷ 다시 실행</button>
+    <button id="clear">전체 지우기</button>
+    <button id="openBoard" type="button">♫ 작품마당</button>
+    <button id="tempSave" type="button">▣ 임시저장</button>
+    <label>찍을 칸 <select id="editTrack"><option value="melody">멜로디</option><option value="harmony">화음</option><option value="accomp">반주</option></select></label>
+  </div>
+  <p id="editStatus" class="edit-status" role="status"></p>
+  <p class="temp-warning">임시저장은 이 화면에서만 유지됩니다. 새로고침하거나 창을 닫으면 사라져요. 오래 보관하려면 원하는 작업을 복원한 뒤 「파일로 저장」을 누르세요.</p>
+  <div class="panel">
+    <div class="hint">
+      칸을 클릭해 음을 넣거나 지울 수 있습니다. 같은 박에 여러 음을 선택하면 화음도 만들 수 있습니다.
+      한 박을 2칸으로 나누면 8분음표, 4칸으로 나누면 16분음표 위치에 음을 찍을 수 있습니다. 같은 음을 오른쪽으로 드래그하면 2분음표·온음표처럼 길어집니다.
+    </div>
+    <div id="audioStatus" class="hint" aria-live="polite">첫 재생 시 실제 악기 음원을 불러옵니다. 인터넷 연결이 필요합니다.</div>
+    <div class="scroll">
+      <div id="grid"></div>
+    </div>
+  </div>
+
+  </div>
+  <aside id="toolDrawer" class="tool-drawer" aria-label="다양한 기능">
+    <div class="drawer-head"><strong>다양한 기능</strong><button id="drawerClose" type="button" aria-label="기능 서랍 닫기">✕</button></div>
+
+    <details class="drawer-section"><summary>설정</summary>
+  <div class="controls">
+    <label>음색<br>
+      <select id="instrument">
+        <option value="marimba">마림바</option>
+        <option value="piano">피아노</option>
+      </select>
+    </label>
+
+    <label>옥타브<br>
+      <select id="octaves">
+        <option value="1">1옥타브 + 높은 도</option>
+        <option value="2">2옥타브</option>
+        <option value="3">3옥타브</option>
+        <option value="4">4옥타브 (아래 옥타브 추가)</option>
+      </select>
+    </label>
+
+    <label>박자<br>
+      <select id="beats"><option value="4">4박자</option><option value="3">3박자</option><option value="2">2박자</option></select>
+    </label>
+
+    <label>마디<br>
+      <select id="bars">
+        <option value="8">8마디</option>
+        <option value="12">12마디</option>
+        <option value="16">16마디</option>
+        <option value="24">24마디</option>
+        <option value="32">32마디</option>
+      </select>
+    </label>
+
+    <label>한 박 나누기<br>
+      <select id="divide"><option value="1">안 나누기 · 4분음표</option><option value="2">반으로 · 8분음표</option><option value="4">반의 반 · 16분음표</option></select>
+    </label>
+
+    <label>조표<br>
+      <select id="key">
+        <option value="none">♮ 없음 · 다장조 (도 시작)</option>
+        <option value="fsharp">파♯ · 사장조 (솔 시작)</option>
+        <option value="fsharp-csharp">파♯·도♯ · 라장조 (레 시작)</option>
+        <option value="fsharp-csharp-gsharp">파♯·도♯·솔♯ · 가장조 (라 시작)</option>
+        <option value="bflat">시♭ · 바장조 (파 시작)</option>
+        <option value="bflat-eflat">시♭·미♭ · 내림나장조 (시♭ 시작)</option>
+        <option value="bflat-eflat-aflat">시♭·미♭·라♭ · 내림마장조 (미♭ 시작)</option>
+      </select>
+      <div id="keyStatus" class="key-status" aria-live="polite">다장조 · 시작음 도4</div>
+    </label>
+
+<fieldset id="chromaticControls" class="chromatic-controls"><legend>추가할 반음 선택</legend><p class="hint">같은 소리의 두 이름을 함께 표시해요. 선택한 음은 모든 옥타브에 추가됩니다.</p><label><input id="chromatic1" type="checkbox"> 도♯ / 레♭</label><label><input id="chromatic3" type="checkbox"> 레♯ / 미♭</label><label><input id="chromatic6" type="checkbox"> 파♯ / 솔♭</label><label><input id="chromatic8" type="checkbox"> 솔♯ / 라♭</label><label><input id="chromatic10" type="checkbox"> 라♯ / 시♭</label><p id="chromaticStatus" class="hint" role="status">조표에 이미 포함된 반음은 자동으로 표시됩니다.</p></fieldset>
+    <label>빠르기 · BPM<br>
+      <span class="tempo-control"><input id="tempo" type="range" min="50" max="240" value="120" aria-label="빠르기 조절">
+      <input id="tempoNumber" type="number" min="50" max="240" step="1" value="120" inputmode="numeric" aria-label="빠르기 숫자 입력"></span>
+    </label>
+  </div>
+
+    </details>
+    <details class="drawer-section"><summary>음 높이 이동</summary>
+      <label>악보에서 할 일<select id="selectMode"><option value="draw">음 찍기</option><option value="select">드래그로 음 선택하기</option></select></label>
+      <label>이동할 범위<select id="moveScope"><option value="bars">마디 범위</option><option value="selection">드래그로 선택한 음</option></select></label>
+      <div class="field-pair"><label>시작 마디<input id="moveStart" type="number" min="1" value="1"></label><label>끝 마디<input id="moveEnd" type="number" min="1" value="2"></label></div>
+      <label>이동할 파트<select id="moveTrack"><option value="melody">멜로디</option><option value="harmony">화음</option><option value="accomp">반주</option><option value="all">모든 음 파트</option></select></label>
+      <div class="small-actions"><button id="moveUp">한 음 ↑</button><button id="moveDown">한 음 ↓</button><button id="octaveUp">옥타브 ↑</button><button id="octaveDown">옥타브 ↓</button></div>
+      <p class="hint">현재 조의 음계를 따라 이동해요. 음이 범위의 경계에 걸쳐 있으면 그 음 전체가 이동합니다. 잠긴 반주는 보호됩니다.</p><p id="moveStatus" role="status"></p>
+    </details>
+    <details class="drawer-section"><summary>파트별 듣기</summary>
+      <p class="hint">화음은 점선 테두리, 반주는 회색으로 보여요. 재생 중에도 음량을 바꿀 수 있어요.</p><p class="hint">이전 버전 파일에 멜로디와 합쳐 저장된 화음은 자동으로 분리되지 않아요. 새 예시곡은 화음 파트를 따로 조절할 수 있어요.</p>
+<div class="mixer-row"><label for="volume_melody">멜로디</label><input id="volume_melody" type="range" min="0" max="100" value="100" aria-label="멜로디 음량"><output id="volumeLabel_melody">100%</output><label class="mute-label"><input id="mute_melody" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_harmony">화음</label><input id="volume_harmony" type="range" min="0" max="100" value="75" aria-label="화음 음량"><output id="volumeLabel_harmony">75%</output><label class="mute-label"><input id="mute_harmony" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_accomp">반주</label><input id="volume_accomp" type="range" min="0" max="100" value="65" aria-label="반주 음량"><output id="volumeLabel_accomp">65%</output><label class="mute-label"><input id="mute_accomp" type="checkbox">음소거</label></div><div class="mixer-row"><label for="volume_rhythm">리듬</label><input id="volume_rhythm" type="range" min="0" max="100" value="65" aria-label="리듬 음량"><output id="volumeLabel_rhythm">65%</output><label class="mute-label"><input id="mute_rhythm" type="checkbox">음소거</label></div>
+    </details>
+    <details class="drawer-section"><summary>오디오 내보내기</summary>
+      <label>저장할 구간<select id="exportRange"><option value="all">곡 전체</option><option value="range">반복 설정의 시작~끝 마디 · 한 번</option></select></label>
+      <button id="exportAudio">WAV 오디오로 저장</button><p class="hint">현재 음색·BPM·파트별 음량·음소거를 반영합니다. 반복 재생을 켰어도 한 번만 저장해요.</p><p id="exportStatus" role="status"></p>
+    </details>
+
+    <details class="drawer-section"><summary>예시곡</summary>
+  <div class="panel examples">
+    <label for="example">예시 곡 · 불러오면 현재 작업이 바뀝니다</label>
+    <div class="example-controls"><select id="example"><option value="">예시를 선택하세요</option></select>
+      <label id="moneyStyleWrap" hidden>머니코드 반주 모양<br><select id="moneyStyle">
+        <option value="block">코드반주 · 한꺼번에</option>
+        <option value="broken">아르페지오반주 · 낮은음–가운데–높은음–가운데</option>
+        <option value="alberti">알베르티베이스반주 · 낮은음–높은음–가운데–높은음</option>
+      </select></label>
+      <button id="loadExample" type="button">예시 불러오기</button></div>
+    <div id="exampleConfirm" class="example-confirm" hidden role="group" aria-label="예시 불러오기 확인">
+      <p id="exampleConfirmText"></p>
+      <button id="confirmExample" type="button" class="primary">변경하고 불러오기</button>
+      <button id="cancelExample" type="button">취소</button>
+    </div>
+    <div id="exampleInfo" class="hint" aria-live="polite">작은별·나비야·캐논과 머니코드 반주를 골라 들어 볼 수 있습니다.</div>
+  </div>
+
+    </details>
+    <details class="drawer-section"><summary>반주 · 반복</summary>
+  <div class="compose-tools">
+    <button id="lockAccomp" type="button" aria-pressed="false">🔓 반주 잠금</button>
+    <label>시작 마디<br><input id="loopStart" type="number" min="1" max="8" value="1"></label>
+    <label>끝 마디<br><input id="loopEnd" type="number" min="1" max="8" value="8"></label>
+    <button id="loop" type="button" aria-pressed="false">↻ 선택 마디 반복: 꺼짐</button>
+  </div>
+  <div class="compose-tools copy-tools" aria-label="마디 복사와 붙여넣기">
+    <strong>마디 복사·붙여넣기</strong>
+    <label>복사 시작<br><input id="copyStart" type="number" min="1" max="8" value="1"></label>
+    <label>복사 끝<br><input id="copyEnd" type="number" min="1" max="8" value="2"></label>
+    <button id="copyBars" type="button">마디 복사</button>
+    <label>붙여넣을 시작 마디<br><input id="pasteStart" type="number" min="1" max="8" value="3"></label>
+    <button id="pasteBars" type="button">붙여넣기</button>
+    <span id="copyStatus" class="hint" role="status">선택한 마디의 멜로디·반주·리듬을 복사합니다. 붙여넣는 칸의 내용은 바뀝니다.</span>
+  </div>
+  <p class="help-note">선택한 조의 시작음이 맨 아래에 놓입니다. 반주 칸은 회색으로 구분됩니다. 잠그면 반주만 보호됩니다. 리듬은 언제든 찍거나 지울 수 있습니다. 반복을 켜면 지정한 마디가 정지할 때까지 계속 재생됩니다.</p>
+
+    </details>
+    <details class="drawer-section"><summary>임시저장 · 파일</summary>
+  <div class="temp-panel"><strong>임시저장 목록</strong>
+    <p>이 페이지를 새로고침하거나 닫으면 아래 임시저장은 모두 사라집니다. 영구 보관하려면 원하는 작업을 복원한 뒤 파일로 저장하세요.</p>
+    <div id="tempList"></div><div id="tempStatus" role="status"></div>
+  </div>
+  <div class="actions drawer-actions">
+    <button id="save">💾 파일로 저장</button>
+    <label class="file-picker">작곡 파일 불러오기<input id="loadFile" type="file" accept=".json,application/json"></label><p id="fileStatus" role="status"></p>
+    <button id="share">🔗 공유 코드</button>
+    <button id="helpButton" type="button">? 도움말</button>
+    <span id="helpTeaser" class="help-teaser">어떻게 해야 할지 모르겠다면 클릭!</span>
+  </div>
+  <div id="sharePanel" class="panel share-panel">
+    <label>공유 코드</label>
+    <textarea id="shareCode" readonly></textarea>
+    <div class="hint">코드를 복사해 친구에게 보내고, 아래에 붙여넣으면 작품을 불러올 수 있습니다.</div>
+    <div class="share-row">
+      <input id="loadCode" type="text" placeholder="받은 공유 코드를 붙여넣기">
+      <button id="load" class="primary">불러오기</button>
+    </div>
+    <div id="msg" class="msg"></div>
+  </div>
+    </details>
+  </aside>
+</div>
+
+<div id="helpShade" class="help-shade" aria-hidden="true">
+  <div id="helpCard" class="help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center"><strong id="helpCounter" style="font-size:12px;color:#84909d"></strong><button id="helpClose" type="button" aria-label="도움말 닫기" style="border:0;min-height:30px;padding:4px 8px">✕</button></div>
+    <h2 id="helpTitle"></h2><p id="helpBody"></p><div id="helpDemo" class="mini-demo"></div>
+    <div class="help-nav"><button id="helpPrev" type="button">← 이전</button><span id="helpPosition"></span><button id="helpNext" type="button" class="primary">다음 →</button></div>
+  </div>
+</div>
+
+
+<section id="boardPanel" hidden aria-label="작품마당"><div class="board-inner">
+<div class="board-top"><div><h2>작품마당</h2><p>나의 음악을 나누고, 친구의 음악을 이어 만들어요.</p></div><button id="boardClose">작곡실로 돌아가기</button></div>
+<p id="boardStatus" role="status" aria-live="polite">연결을 준비하고 있어요.</p>
+<input id="boardLink" hidden readonly aria-label="공유할 작품 링크">
+<div id="boardAuth" class="board-box"><strong>로그인</strong><p class="hint">작품은 이 사이트에 로그인한 회원 모두에게 공개됩니다. 반별 비공개 공간은 아닙니다. 이메일은 작품에 표시되지 않아요.</p>
+<div class="board-fields"><label>이메일<input id="boardEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="boardPassword" type="password" minlength="8" autocomplete="current-password"></label></div>
+<button id="boardLogin">로그인</button> <button id="boardSignup">회원가입</button></div>
+<div id="boardMember" hidden><span id="boardUser"></span> <button id="boardLogout">로그아웃</button><p class="hint">공용 컴퓨터에서는 수업이 끝나면 로그아웃해 주세요.</p></div>
+<details id="boardComposer" class="board-box" hidden><summary>지금 만든 작품 올리기</summary>
+<div class="board-fields"><label>제목<input id="boardTitle" maxlength="80"></label><label>별명<input id="boardNick" maxlength="30"></label><label>작품 소개<textarea id="boardDescription" maxlength="500"></textarea></label></div>
+<p id="boardSource" class="hint"></p><label><input id="boardConsent" type="checkbox">내가 공유할 수 있는 작품이며, 회원 공개와 사본 편집을 허용해요.</label><p class="hint">음 배치·박자·악기·템포만 저장해요. WAV 파일은 올리지 않아요.</p><button id="boardPublish" class="primary">작품 올리기</button></details>
+<div class="work-controls"><label>정렬 <select id="boardSort"><option value="new">최신순</option><option value="likes">좋아요순</option><option value="remixes">많이 가져간 순</option></select></label><label><input id="boardMine" type="checkbox">내 작품만</label><button id="boardRefresh">새로고침 · 전체 목록</button></div>
+<p class="hint">좋아요·가져가기는 계정당 한 번 집계해요. ‘많이 가져간 순’은 사본을 가져간 회원 수이며, 편집을 완성한 횟수는 아니에요.</p>
+<div id="boardCards"></div><div class="work-controls" style="margin-top:16px"><button id="boardPrev" disabled>이전</button><span id="boardPage">1쪽</span><button id="boardNext" disabled>다음</button></div>
+<details id="boardSetup" class="board-box" hidden><summary>운영자: GitHub · Vercel · Supabase 연결 안내</summary>
+<ol><li>이 파일을 <b>index.html</b> 이름으로 GitHub 저장소 최상위에 올립니다.</li><li>Vercel에서 저장소를 Import합니다. Framework Preset은 Other, Build Command는 비워 두고 Output Directory는 루트(.)로 지정합니다.</li><li>Supabase 프로젝트를 만든 뒤 아래 SQL을 다운로드하여 SQL Editor에 붙여 넣고 한 번 실행합니다.</li><li>Authentication의 Email 로그인을 사용합니다. URL Configuration의 Site URL과 Redirect URLs에 Vercel 주소를 등록합니다. 이메일 확인을 사용할 경우 실제 학생 가입 전에 메일 발송 설정과 발송 제한도 확인하세요.</li><li>이 HTML 맨 위 <code>MUSIC_BOARD_CONFIG</code>의 url에는 프로젝트 URL, key에는 <b>Publishable key</b>(또는 legacy anon key)를 입력해 GitHub에 다시 올립니다. <b>secret/service_role 키는 절대 입력하지 않습니다.</b></li><li>두 계정으로 게시·좋아요 취소·사본 편집·본인 작품 삭제와 타인 작품 삭제 차단을 확인한 뒤 학생에게 안내합니다.</li></ol>
+<button id="downloadSQL">Supabase 설정 SQL 다운로드</button><p>게시판에는 파일 저장소(Storage)가 필요하지 않습니다. 작품은 JSON으로 저장하며 각 작품은 최대 약 280KB로 제한합니다. 이 버전은 회원 전체 공유 공간입니다. 가입을 제한하려면 Supabase에서 신규 가입을 끄고 운영자가 계정을 만들어 주세요. 교사는 Supabase Table Editor에서 게시물을 관리할 수 있습니다.</p>
+<p>작품 삭제는 본인만 가능합니다. 변경한 작품은 새 게시물로 올립니다. 링크는 로그인 후 열립니다. 음원 CDN과 Supabase 접속은 실제 학교 네트워크에서 확인해 주세요.</p>
+</details></div></section>
+
+<script>
+(() => {
+  const $=id=>document.getElementById(id);
+  const octSel=$('octaves'),barsSel=$('bars'),beatsSel=$('beats'),divSel=$('divide'),keySel=$('key'),instSel=$('instrument'),tempo=$('tempo'),tempoNumber=$('tempoNumber');
+  const names=['도','레','미','파','솔','라','시'];
+  const chromaticNames={1:'도♯ / 레♭',3:'레♯ / 미♭',6:'파♯ / 솔♭',8:'솔♯ / 라♭',10:'라♯ / 시♭'};
+  const cleanChromatics=value=>[...new Set(Array.isArray(value)?value:[])].filter(n=>[1,3,6,8,10].includes(n)).sort((a,b)=>a-b);
+  let chromatics=[];
+  const palette={도:'#df9ea5',레:'#d5aa86',미:'#cfbb80',파:'#95baa5',솔:'#91b7ba',라:'#9cadd0',시:'#b2a4c5'};
+  const semis={도:0,레:2,미:4,파:5,솔:7,라:9,시:11};
+  const mods={none:{},fsharp:{파:1},'fsharp-csharp':{파:1,도:1},'fsharp-csharp-gsharp':{파:1,도:1,솔:1},bflat:{시:-1},'bflat-eflat':{시:-1,미:-1},'bflat-eflat-aflat':{시:-1,미:-1,라:-1}};
+  const keyNames={
+    none:{major:'다장조',tonic:'도'},
+    fsharp:{major:'사장조',tonic:'솔'},
+    'fsharp-csharp':{major:'라장조',tonic:'레'},
+    'fsharp-csharp-gsharp':{major:'가장조',tonic:'라'},
+    bflat:{major:'바장조',tonic:'파'},
+    'bflat-eflat':{major:'내림나장조',tonic:'시'},
+    'bflat-eflat-aflat':{major:'내림마장조',tonic:'미'}
+  };
+  const currentKey=()=>keyNames[keySel.value]||keyNames.none;
+  function updateKeyStatus(){const k=currentKey();$('keyStatus').textContent=`${k.major} · 시작음 ${k.tonic}${(mods[keySel.value]||{})[k.tonic]===-1?'♭':''}${Number(octSel.value)===4?3:4}`}
+  const drums=['큰북','작은북','하이햇'];
+  let harmony=new Set(),harmonyHolds=new Set();
+  let mix={melody:100,harmony:75,accomp:65,rhythm:65},muted={melody:false,harmony:false,accomp:false,rhythm:false};
+  let history=[],historyIndex=-1,historyReady=false,historyMoving=false,applying=false,selection=null,selecting=false;
+  let notes=new Set(),accomp=new Set(),holds=new Set(),accompHolds=new Set(),rhythm=new Set(),ctx,playing=false,playColumn=-1,timers=[],activeSources=[],locked=false,looping=false,playId=0,drag=null;
+  const banks={},pending={};
+  const divide=()=>Number(divSel.value),count=()=>Number(barsSel.value)*Number(beatsSel.value)*divide();
+  const rows=(octaves=Number(octSel.value),keyId=keySel.value,extras=chromatics)=>{
+    const four=octaves===4,base=four?3:4,start=names.indexOf((keyNames[keyId]||keyNames.none).tonic),count=octaves*7;
+    const ascending=[];
+    for(let i=0;i<=count;i++){
+      const degree=start+i;
+      ascending.push({name:names[degree%7],octave:base+Math.floor(degree/7),degree:i});
+    }
+    const pitches=new Set(ascending.map(r=>midi(r,keyId))),low=Math.min(...pitches),high=Math.max(...pitches);
+    for(let pitch=low+1;pitch<high;pitch++)if(extras.includes(pitch%12)&&!pitches.has(pitch))ascending.push({name:chromaticNames[pitch%12],octave:Math.floor(pitch/12)-1,pitch,added:true});
+    return ascending.sort((a,b)=>midi(b,keyId)-midi(a,keyId));
+  };
+  const midi=(r,keyId=keySel.value)=>r.pitch??(60+12*(r.octave-4)+semis[r.name]+((mods[keyId]||{})[r.name]||0));
+  const isChromatic=r=>Object.hasOwn(chromaticNames,midi(r)%12);
+  const label=r=>isChromatic(r)?chromaticNames[midi(r)%12]+(Math.floor(midi(r)/12)-1):r.name+r.octave;
+  const rowColor=r=>isChromatic(r)?'#adb3bf':palette[r.name];
+  function syncChromatics(){
+    const included=new Set(rows(Number(octSel.value),keySel.value,[]).map(r=>midi(r)%12));
+    for(const pitch of [1,3,6,8,10]){const box=$('chromatic'+pitch);box.checked=chromatics.includes(pitch)||included.has(pitch);box.disabled=included.has(pitch);box.title=included.has(pitch)?'이미 조표에 포함된 음입니다.':'';}
+  }
+  function remapRows(oldRows,newRows,mapPitch=r=>midi(r)){
+    const index=new Map(newRows.map((r,i)=>[midi(r),i])),tracks=[notes,holds,harmony,harmonyHolds,accomp,accompHolds];
+    if(tracks.some(set=>[...set].some(k=>!index.has(mapPitch(oldRows[Number(k.split(':')[0])])))))return false;
+    for(const set of tracks){const next=[...set].map(k=>{const [r,c]=k.split(':').map(Number);return key(index.get(mapPitch(oldRows[r])),c)});set.clear();next.forEach(k=>set.add(k))}
+    selection=null;drag=null;return true;
+  }
+  for(const pitch of [1,3,6,8,10])$('chromatic'+pitch).onchange=()=>{
+    stop();const oldRows=rows(),previous=chromatics;chromatics=cleanChromatics($('chromatic'+pitch).checked?[...chromatics,pitch]:chromatics.filter(n=>n!==pitch));
+    if(!remapRows(oldRows,rows())){chromatics=previous;syncChromatics();$('chromaticStatus').textContent='이 반음에 입력한 음이 있어요. 해당 음을 옮기거나 지운 뒤 해제해 주세요.';return;}
+    render();$('chromaticStatus').textContent='반음 설정을 변경했어요. 기존 음 높이와 길이는 유지돼요.';
+  };
+  const key=(row,col)=>row+':'+col;
+  function durationAt(row,col,held){let steps=1;while(col+steps<count()&&held.has(key(row,col+steps)))steps++;return steps}
+  function editSet(track){return track==='accomp'?accomp:track==='harmony'?harmony:notes}
+  function heldSet(track){return track==='accomp'?accompHolds:track==='harmony'?harmonyHolds:holds}
+  function erase(row,col,track){
+    const starts=editSet(track),held=heldSet(track),k=key(row,col);
+    if(starts.has(k)){starts.delete(k);for(let c=col+1;held.delete(key(row,c));c++);return}
+    if(!held.has(k))return;
+    let first=col;while(first>0&&!starts.has(key(row,first)))first--;
+    for(let c=first+1;held.delete(key(row,c));c++);
+  }
+  function paintCell(row,col){
+    const e=$('grid').querySelector(`[data-row="${row}"][data-col="${col}"]`);if(!e)return;
+    const k=key(row,col),melody=notes.has(k)||holds.has(k)||harmony.has(k)||harmonyHolds.has(k),back=accomp.has(k)||accompHolds.has(k),color=rowColor(rows()[row]);
+    e.classList.toggle('on',melody||back);e.classList.toggle('accomp',back);e.classList.toggle('held',holds.has(k)||accompHolds.has(k)||harmonyHolds.has(k));e.classList.toggle('harmony',harmony.has(k)||harmonyHolds.has(k));
+    e.classList.toggle('both',melody&&back);e.style.background=melody?color:back?'#cbd2dc':isChromatic(rows()[row])?'#f5f6f8':'#fff';
+  }
+  function beginDrag(row,col,track){
+    if(locked&&track==='accomp')return;
+    const set=editSet(track),held=heldSet(track),k=key(row,col);
+    if(set.has(k)){drag={row,start:col,end:col,track,existing:true,moved:false};return}
+    if(held.has(k)){erase(row,col,track);render();return}
+    set.add(k);drag={row,start:col,end:col,track};paintCell(row,col);
+    sound(midi(rows()[row]),Math.max(.17,60000/Number(tempo.value)/divide()/1000));
+  }
+  function moveDrag(col){
+    if(!drag)return;const {row,start,track}=drag;if(col<start)return;
+    const held=heldSet(track),set=editSet(track);
+    for(let c=start+1;c<=drag.end;c++){held.delete(key(row,c));paintCell(row,c)}
+    let end=Math.min(col,count()-1);
+    for(let c=start+1;c<=end;c++){if(set.has(key(row,c))){end=c-1;break}held.add(key(row,c));paintCell(row,c)}
+    drag.end=end;drag.moved=drag.moved||end!==start;
+  }
+  function cell(text,cls=''){const e=document.createElement('div');e.className=cls;e.textContent=text;return e}
+  function refreshPlayhead(next){
+    const wrap=$('grid').firstElementChild;
+    if(wrap&&wrap.querySelectorAll){
+      if(playColumn>=0)wrap.querySelectorAll(`[data-col="${playColumn}"]`).forEach(e=>e.classList.remove('playing'));
+      if(next>=0)wrap.querySelectorAll(`[data-col="${next}"]`).forEach(e=>e.classList.add('playing'));
+    }
+    playColumn=next;
+  }
+  let renderedOctaves=Number(octSel.value),renderedKey=keySel.value;
+  function render(){
+    renderedOctaves=Number(octSel.value);renderedKey=keySel.value;syncChromatics();
+    const all=rows(),d=divide(),perBar=Number(beatsSel.value)*d,n=count(),width=d===4?24:d===2?29:34,wrap=document.createElement('div');
+    wrap.style.cssText=`display:grid;grid-template-columns:${all.some(isChromatic)?108:72}px repeat(${n},${width}px);gap:2px;align-items:center`;
+    wrap.appendChild(cell('음 / 박','hint'));
+    for(let c=0;c<n;c++){
+      const k=c%d,beat=Math.floor(c/d)%Number(beatsSel.value),bar=Math.floor(c/perBar)+1;
+      const h=cell(k===0?(beat===0?String(bar):String(beat+1)):(d===2?'&':['','e','&','a'][k]),'hint');
+      h.style.cssText=k===0&&beat===0?'font-size:19px;font-weight:800;color:#374151;text-align:center;margin:0;line-height:28px':'font-size:10px;text-align:center;margin:0';
+      if(k===0&&beat===0){h.className='measure-number';h.setAttribute('aria-label',bar+'마디');h.title=bar+'마디'}
+      wrap.appendChild(h);
+    }
+    function row(title,color,rowIndex,isDrum=false){
+      const b=document.createElement('button');b.className='row-label';b.textContent=title;b.style.background='#fff';b.style.borderColor='#e6e8ed';if(!isDrum&&isChromatic(all[rowIndex])){b.style.background='#e5e7eb';b.style.color='#4b5563';b.className+=' chromatic-label';}
+      b.onclick=()=>isDrum?drumSound(rowIndex):sound(midi(all[rowIndex]),.35);wrap.appendChild(b);
+      for(let c=0;c<n;c++){
+        const k=key(rowIndex,c),m=notes.has(k)||holds.has(k)||harmony.has(k)||harmonyHolds.has(k),a=accomp.has(k)||accompHolds.has(k),r=rhythm.has(k),on=isDrum?r:m||a,v=document.createElement('button');
+        v.type='button';v.dataset.col=String(c);if(!isDrum)v.dataset.row=String(rowIndex);
+        v.className='step'+(!isDrum&&(harmony.has(k)||harmonyHolds.has(k))?' harmony':'')+(on?' on':'')+(!isDrum&&a?' accomp':'')+(!isDrum&&(holds.has(k)||accompHolds.has(k)||harmonyHolds.has(k))?' held':'')+(!isDrum&&a&&m?' both':'')+(locked&&!isDrum&&a&&!m?' locked':'')+(c===playColumn?' playing':'');
+        v.style.width=width+'px';v.style.setProperty('--melody-color',color);v.style.background=on?(isDrum?'#cbd2dc':m?color:'#cbd2dc'):(!isDrum&&isChromatic(all[rowIndex])?'#f5f6f8':'#fff');
+        if(!isDrum&&(notes.has(k)||accomp.has(k)||harmony.has(k))){
+          const len=Math.max(notes.has(k)?durationAt(rowIndex,c,holds):0,accomp.has(k)?durationAt(rowIndex,c,accompHolds):0,harmony.has(k)?durationAt(rowIndex,c,harmonyHolds):0);
+          v.textContent=len===4*d?'𝅝':len===2*d?'𝅗𝅥':len===d?'♩':len===d/2?'♪':len===d/4?'♬':'';
+          v.style.fontSize='15px';v.style.color='#35404a';
+          v.title=(len/d)+'박 길이';
+        }
+        v.style.border=`${c%perBar===0?2:1}px solid ${on?'#9da5b0':c%d===0?'#cfd4dc':'#e6e8ed'}`;
+        const position=`${Math.floor(c/perBar)+1}마디 ${Math.floor(c/d)%Number(beatsSel.value)+1}박 ${c%d+1}/${d}`;
+        v.setAttribute('aria-label',`${title} ${position} ${isDrum?r?'리듬 선택됨':'비어 있음':m&&a?'멜로디와 반주':m?'멜로디':a?'반주':'비어 있음'}${holds.has(k)||accompHolds.has(k)||harmonyHolds.has(k)?' 이어지는 음':''}`);
+        v.setAttribute('aria-pressed',String(on));
+        if(!isDrum&&selectedCell(rowIndex,c))v.classList.add('selected');
+        if(!isDrum&&(harmony.has(k)||harmonyHolds.has(k)))v.setAttribute('aria-label',v.getAttribute('aria-label')+' 화음 성부');
+        if(isDrum)v.onclick=()=>{if(r)rhythm.delete(k);else{rhythm.add(k);drumSound(rowIndex)}render()};
+        wrap.appendChild(v);
+      }
+    }
+    all.forEach((r,i)=>row(label(r),rowColor(r),i));
+    const sep=cell('리듬 ↓','hint');sep.style.gridColumn=`1 / span ${n+1}`;sep.style.marginTop='12px';wrap.appendChild(sep);
+    drums.forEach((dr,i)=>row(dr,['#b9c1cb','#b9c1cb','#b9c1cb'][i],i,true));
+    $('grid').replaceChildren(wrap);commitHistory();
+  }
+  $('grid').addEventListener('pointerdown',e=>{
+    const b=e.target.closest?.('[data-row][data-col]');if(!b||e.button!==0)return;
+    e.preventDefault();const r=Number(b.dataset.row),c=Number(b.dataset.col);
+    if($('selectMode').value==='select'){selection={r0:r,r1:r,c0:c,c1:c};$('moveScope').value='selection';$('moveTrack').value=$('editTrack').value;selecting=true;markSelection();return}
+    beginDrag(r,c,$('editTrack').value);
+  });
+  $('grid').addEventListener('pointermove',e=>{
+    if((!drag&&!selecting)||!(e.buttons&1))return;
+    const b=document.elementFromPoint(e.clientX,e.clientY)?.closest?.('[data-row][data-col]');
+    if(selecting&&b){selection.r1=Number(b.dataset.row);selection.c1=Number(b.dataset.col);markSelection();return}
+    if(b&&drag&&Number(b.dataset.row)===drag.row)moveDrag(Number(b.dataset.col));
+  });
+  document.addEventListener('pointerup',()=>{if(selecting){selecting=false;return}if(drag){if(drag.existing&&!drag.moved)erase(drag.row,drag.start,drag.track);drag=null;render()}});
+  document.addEventListener('pointercancel',()=>{selecting=false;if(drag){drag=null;render()}});
+  function audio(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx}
+  // FluidR3_GM, CC BY 3.0. The original soundfont's JS files supply base64 MP3 per pitch.
+  const base='https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/';
+  function loadBank(name){
+    if(banks[name])return Promise.resolve(banks[name]);
+    if(pending[name])return pending[name];
+    pending[name]=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');script.src=base+name+'-mp3.js';
+      const timeout=setTimeout(()=>reject(Error('음원 연결 시간 초과')),8000);
+      script.onload=()=>{clearTimeout(timeout);const bank=window.MIDI?.Soundfont?.[name];if(bank){banks[name]=bank;resolve(bank)}else reject(Error('음원 형식'))};
+      script.onerror=()=>{clearTimeout(timeout);reject(Error('음원 연결'))};
+      document.head.appendChild(script);
+    }).catch(e=>{delete pending[name];$('audioStatus').textContent='음원 연결이 안 되어 대체 음색으로 재생합니다. 인터넷 연결을 확인해 주세요.';return null});
+    return pending[name];
+  }
+  const decoded=new Map();
+  const pitch=m=>['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][m%12]+(Math.floor(m/12)-1);
+  async function sample(name,m){
+    const bank=await loadBank(name);if(!bank)return null;
+    const key=name+':'+m;if(decoded.has(key))return decoded.get(key);
+    const promise=(async()=>{
+      const uri=bank[pitch(m)];if(!uri)return null;
+      const binary=atob(uri.split(',')[1]),bytes=new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      return audio().decodeAudioData(bytes.buffer);
+    })().catch(()=>null);
+    decoded.set(key,promise);return promise;
+  }
+  let liveBuses={};
+  function outputBuses(context,levels,mutes){
+    const compressor=context.createDynamicsCompressor();compressor.threshold.value=-8;compressor.ratio.value=6;compressor.connect(context.destination);
+    const result={};for(const track of ['melody','harmony','accomp','rhythm']){const g=context.createGain();g.gain.value=mutes[track]?0:levels[track]/100;g.connect(compressor);result[track]=g}return result;
+  }
+  function trackSource(src,remember){if(!remember)return;activeSources.push(src);src.onended=()=>{const i=activeSources.indexOf(src);if(i>=0)activeSources.splice(i,1)}}
+  function scheduleTone(a,buffer,m,t,duration,dest,instrument,remember=false){
+    const g=a.createGain();g.connect(dest);
+    if(buffer){
+      const src=a.createBufferSource();src.buffer=buffer;src.connect(g);
+      g.gain.setValueAtTime(.4,t);g.gain.setValueAtTime(.4,t+duration);g.gain.exponentialRampToValueAtTime(.0001,t+duration+.24);
+      src.start(t);src.stop(t+duration+.28);trackSource(src,remember);return;
+    }
+    const mar=instrument!=='piano',f=440*2**((m-69)/12);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(mar?.2:.16,t+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.25,duration+(mar?.1:.35)));
+    (mar?[[1,1],[3.98,.13],[9.2,.025]]:[[1,1],[2,.3],[3,.12],[4,.07]]).forEach(([ratio,vol])=>{
+      const o=a.createOscillator(),v=a.createGain();o.type='sine';o.frequency.value=f*ratio;v.gain.value=vol;o.connect(v);v.connect(g);o.start(t);o.stop(t+duration+.4);trackSource(o,remember);
+    });
+  }
+  function scheduleDrum(a,type,t,dest,remember=false){
+    if(type===2){const len=Math.floor(a.sampleRate*.065),b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const src=a.createBufferSource(),g=a.createGain();src.buffer=b;g.gain.value=.16;src.connect(g);g.connect(dest);src.start(t);src.stop(t+.07);trackSource(src,remember);return}
+    const o=a.createOscillator(),g=a.createGain();o.type=type===0?'sine':'triangle';o.frequency.setValueAtTime(type===0?130:220,t);o.frequency.exponentialRampToValueAtTime(type===0?48:100,t+.15);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+(type===0?.27:.13));o.connect(g);g.connect(dest);o.start(t);o.stop(t+.3);trackSource(o,remember);
+  }
+  function ensureBuses(){const a=audio();if(!liveBuses.melody)liveBuses=outputBuses(a,mix,muted);return a}
+  async function sound(m,duration=.4){
+    const id=playId,a=ensureBuses(),instrument=instSel.value,name=instrument==='piano'?'acoustic_grand_piano':'marimba',track=$('editTrack').value;
+    const buffer=await sample(name,m);if(id!==playId)return;
+    scheduleTone(a,buffer,m,a.currentTime,duration,liveBuses[track]||liveBuses.melody,instrument,true);
+    $('audioStatus').textContent=buffer?'실제 악기 음원 재생 중':'음원 연결 불가 · 대체 음색 재생';
+  }
+  function drumSound(type){const a=ensureBuses();scheduleDrum(a,type,a.currentTime,liveBuses.rhythm,true)}
+  function stop(){playId++;timers.forEach(clearTimeout);timers=[];activeSources.forEach(s=>{try{s.stop()}catch(e){}});activeSources=[];playing=false;refreshPlayhead(-1)}
+  function syncLoop(){
+    const bars=Number(barsSel.value);for(const id of ['loopStart','loopEnd']){$(id).max=String(bars);$(id).value=String(Math.max(1,Math.min(bars,Number($(id).value)||1)))}
+    if(Number($('loopStart').value)>Number($('loopEnd').value))$('loopEnd').value=$('loopStart').value;
+  }
+  function scoreEvents(s,first,last){
+    const events=[],step=60/s.tempo/s.divide,all=rows(s.octaves,s.key,s.chromatics||[]),limit=s.bars*s.beats*s.divide;
+    for(const [track,startName,holdName] of [['melody','notes','holds'],['harmony','harmony','harmonyHolds'],['accomp','accomp','accompHolds']]){
+      const held=new Set(s[holdName]||[]);
+      for(const item of s[startName]||[]){const [r,c]=item.split(':').map(Number);if(!all[r])continue;let end=c+1;while(end<limit&&held.has(key(r,end)))end++;
+        if(c>=last||end<=first)continue;const onset=Math.max(c,first);
+        events.push({track,midi:midi(all[r],s.key),time:(onset-first)*step,duration:(Math.min(end,last)-onset)*step*.98});
+      }
+    }
+    for(const item of s.rhythm||[]){const [drum,c]=item.split(':').map(Number);if(c>=first&&c<last)events.push({track:'rhythm',drum,time:(c-first)*step})}
+    return {events,seconds:(last-first)*step};
+  }
+  async function prepareSounds(s,events){
+    const bank=s.instrument==='piano'?'acoustic_grand_piano':'marimba',pitches=[...new Set(events.filter(e=>e.track!=='rhythm').map(e=>e.midi))],buffers=new Map();
+    await Promise.all(pitches.map(async p=>buffers.set(p,await sample(bank,p))));return buffers;
+  }
+  function scheduleScore(a,score,buffers,start,buses,instrument,remember){
+    for(const event of score.events){if(event.track==='rhythm')scheduleDrum(a,event.drum,start+event.time,buses.rhythm,remember);else scheduleTone(a,buffers.get(event.midi),event.midi,start+event.time,event.duration,buses[event.track],instrument,remember)}
+  }
+  async function play(){
+    stop();const id=playId,a=ensureBuses();syncLoop();const s=state(),perBar=s.beats*s.divide,first=looping?(Number($('loopStart').value)-1)*perBar:0,last=looping?Number($('loopEnd').value)*perBar:count(),score=scoreEvents(s,first,last);
+    $('audioStatus').textContent='악기 음원을 불러오는 중…';const buffers=await prepareSounds(s,score.events);if(id!==playId)return;
+    $('audioStatus').textContent=[...buffers.values()].some(Boolean)?'실제 악기 음원 준비 완료':'대체 음색으로 재생';playing=true;syncMixer();
+    function cycle(){
+      if(!playing||id!==playId)return;const start=a.currentTime+.025;scheduleScore(a,score,buffers,start,liveBuses,s.instrument,true);
+      for(let c=first;c<last;c++)timers.push(setTimeout(()=>{if(playing&&id===playId)refreshPlayhead(c)},25+(c-first)*60000/s.tempo/s.divide));
+      timers.push(setTimeout(()=>{if(id!==playId)return;if(looping)cycle();else{playing=false;refreshPlayhead(-1)}},25+score.seconds*1000));
+    }
+    cycle();
+  }
+  function wavBytes(buffer){
+    const channels=buffer.numberOfChannels,n=buffer.length,bytes=new ArrayBuffer(44+n*channels*2),view=new DataView(bytes),write=(at,text)=>{for(let i=0;i<text.length;i++)view.setUint8(at+i,text.charCodeAt(i))};
+    write(0,'RIFF');view.setUint32(4,36+n*channels*2,true);write(8,'WAVE');write(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,channels,true);view.setUint32(24,buffer.sampleRate,true);view.setUint32(28,buffer.sampleRate*channels*2,true);view.setUint16(32,channels*2,true);view.setUint16(34,16,true);write(36,'data');view.setUint32(40,n*channels*2,true);
+    const data=Array.from({length:channels},(_,c)=>buffer.getChannelData(c));let peak=1;
+    for(const channel of data)for(const v of channel)peak=Math.max(peak,Math.abs(v));
+    let at=44;for(let i=0;i<n;i++)for(let c=0;c<channels;c++){const value=Math.max(-1,Math.min(1,data[c][i]/peak));view.setInt16(at,Math.round(value*(value<0?32768:32767)),true);at+=2}
+    return bytes;
+  }
+  $('exportAudio').onclick=async()=>{
+    if($('exportAudio').disabled)return;
+    const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Offline){$('exportStatus').textContent='이 브라우저는 오디오 파일 생성을 지원하지 않습니다. Chrome 또는 Edge에서 열어 주세요.';return}
+    const s=state();syncLoop();const perBar=s.beats*s.divide,isRange=$('exportRange').value==='range',first=isRange?(Number($('loopStart').value)-1)*perBar:0,last=isRange?Number($('loopEnd').value)*perBar:count(),score=scoreEvents(s,first,last);
+    if(!score.events.some(e=>!s.muted[e.track]&&s.mix[e.track]>0)){$('exportStatus').textContent='저장할 소리가 없습니다. 음을 넣고 음소거·음량을 확인해 주세요.';return}
+    $('exportAudio').disabled=true;$('exportStatus').textContent='음원을 준비하고 있습니다…';
+    try{
+      audio();const buffers=await prepareSounds(s,score.events),offline=new Offline(2,Math.ceil((score.seconds+.7)*44100),44100),buses=outputBuses(offline,s.mix,s.muted);
+      scheduleScore(offline,score,buffers,0,buses,s.instrument,false);$('exportStatus').textContent='WAV 파일을 만들고 있습니다…';
+      const result=await offline.startRendering(),url=URL.createObjectURL(new Blob([wavBytes(result)],{type:'audio/wav'})),link=document.createElement('a');link.href=url;link.download='나의작곡.wav';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      $('exportStatus').textContent=`WAV 파일을 저장했습니다. 약 ${Math.round(score.seconds)}초 · 현재 파트별 음량과 음소거를 반영했습니다.${[...buffers.values()].some(b=>!b)?' 일부 음은 대체 음색을 사용했습니다.':''}`;
+    }catch(e){$('exportStatus').textContent='오디오 저장에 실패했습니다. 페이지를 내려받아 브라우저에서 다시 열어 주세요.';console.error(e)}finally{$('exportAudio').disabled=false}
+  };
+  function state(){return{v:18,chromatics:[...chromatics],octaves:Number(octSel.value),bars:Number(barsSel.value),beats:Number(beatsSel.value),divide:divide(),key:keySel.value,instrument:instSel.value,tempo:Number(tempo.value),notes:[...notes],accomp:[...accomp],holds:[...holds],accompHolds:[...accompHolds],rhythm:[...rhythm],harmony:[...harmony],harmonyHolds:[...harmonyHolds],mix:{...mix},muted:{...muted},locked}}
+  const temporaryWorks=[];
+  let temporarySerial=0;
+  function renderTemporaryWorks(){
+    const list=$('tempList');list.replaceChildren();$('tempSave').textContent='▣ 임시저장'+(temporaryWorks.length?' ('+temporaryWorks.length+')':'');
+    if(!temporaryWorks.length){const empty=document.createElement('p');empty.textContent='아직 임시저장한 작업이 없습니다.';list.appendChild(empty);return}
+    for(const item of [...temporaryWorks].reverse()){
+      const row=document.createElement('div'),name=document.createElement('span'),restore=document.createElement('button'),remove=document.createElement('button');
+      row.className='temp-item';name.textContent=item.label;
+      restore.type='button';restore.textContent='복원';restore.setAttribute('aria-label',item.label+' 복원');
+      restore.onclick=()=>{
+        const current=JSON.stringify(state());
+        if(current!==JSON.stringify(item.data))temporaryWorks.push({label:`임시저장 ${++temporarySerial} · 복원 직전 작업`,data:JSON.parse(current)});
+        try{apply(item.data);previousDivide=divide();renderTemporaryWorks();$('tempStatus').textContent=item.label+'을 복원했습니다. 복원 직전 작업도 임시저장했습니다.';setDrawer(false)}
+        catch(e){$('tempStatus').textContent='임시 작업을 복원할 수 없습니다.';console.error(e)}
+      };
+      remove.type='button';remove.textContent='삭제';remove.setAttribute('aria-label',item.label+' 삭제');
+      remove.onclick=()=>{temporaryWorks.splice(temporaryWorks.indexOf(item),1);renderTemporaryWorks();$('tempStatus').textContent=item.label+'을 삭제했습니다.'};
+      row.append(name,restore,remove);list.appendChild(row);
+    }
+  }
+  $('tempSave').onclick=()=>{
+    const now=new Date(),clock=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    const label=`임시저장 ${++temporarySerial} · ${clock}`;
+    temporaryWorks.push({label,data:state()});renderTemporaryWorks();
+    $('editStatus').textContent=label+' 완료 · 기능 서랍에서 복원할 수 있어요.';
+    $('tempStatus').textContent=label+' 완료. 이 페이지를 새로고침하거나 닫으면 임시저장도 사라집니다.';
+  };
+  renderTemporaryWorks();
+  function encode(){const bytes=new TextEncoder().encode(JSON.stringify(state()));let str='';for(const b of bytes)str+=String.fromCharCode(b);return btoa(str)}
+  function lock(value){locked=!!value;$('lockAccomp').setAttribute('aria-pressed',String(locked));$('lockAccomp').textContent=locked?'🔒 반주 잠금 해제':'🔓 반주 잠금';if(locked)$('editTrack').value='melody';render()}
+  function apply(s){
+    if(!s||![1,2,3,4].includes(Number(s.octaves))||![8,12,16,24,32].includes(Number(s.bars)))throw Error('형식');
+    chromatics=cleanChromatics(s.chromatics);
+    applying=true;stop();selection=null;octSel.value=s.octaves;barsSel.value=s.bars;beatsSel.value=[2,3,4].includes(Number(s.beats))?s.beats:4;
+    divSel.value=[1,2,4].includes(Number(s.divide))?s.divide:1;
+    if(Object.prototype.hasOwnProperty.call(mods,s.key))keySel.value=s.key;
+    instSel.value=s.instrument==='piano'?'piano':'marimba';
+    tempo.value=Math.max(50,Math.min(240,Number(s.tempo)||120));tempoNumber.value=tempo.value;
+    const valid=(k,r,c)=>typeof k==='string'&&/^(\d+):(\d+)$/.test(k)&&Number(k.split(':')[0])>=0&&Number(k.split(':')[0])<r&&Number(k.split(':')[1])>=0&&Number(k.split(':')[1])<c;
+    const target=rows(),limit=target.length;
+    const legacy=[];
+    if(Number(s.v)<6){
+      const oct=Number(s.octaves);
+      if(s.v!==1)legacy.push({name:'도',octave:oct===4?7:4+oct});
+      for(let o=oct===4?2:oct-1;o>=(oct===4?-1:0);o--)for(let i=6;i>=0;i--)legacy.push({name:names[i],octave:4+o});
+    }
+    const migrate=k=>{
+      if(Number(s.v)>=6)return k;
+      const [r,c]=k.split(':').map(Number),old=legacy[r];if(!old)return null;
+      const oldMidi=60+12*(old.octave-4)+semis[old.name]+((mods[keySel.value]||{})[old.name]||0);
+      let best=-1,distance=Infinity;
+      target.forEach((note,i)=>{const pitch=midi(note);if((pitch-oldMidi)%12!==0)return;const diff=Math.abs(pitch-oldMidi);if(diff<distance){best=i;distance=diff}});
+      return best<0?null:key(best,c);
+    };
+    const restore=(list,legacyLimit)=>new Set((Array.isArray(list)?list:[]).filter(k=>valid(k,legacyLimit,count())).map(migrate).filter(Boolean));
+    notes=restore(s.notes,Number(s.v)<6?legacy.length:limit);
+    accomp=restore(s.accomp,Number(s.v)<6?legacy.length:limit);
+    holds=restore(s.holds,Number(s.v)<6?legacy.length:limit);
+    accompHolds=restore(s.accompHolds,Number(s.v)<6?legacy.length:limit);
+    harmony=restore(s.harmony,limit);harmonyHolds=restore(s.harmonyHolds,limit);
+    for(const track of ['melody','harmony','accomp','rhythm']){mix[track]=Number.isFinite(s.mix?.[track])?Math.max(0,Math.min(100,s.mix[track])):({melody:100,harmony:75,accomp:65,rhythm:65})[track];muted[track]=!!s.muted?.[track]}
+    syncMixer();
+    rhythm=new Set((Array.isArray(s.rhythm)?s.rhythm:[]).filter(k=>valid(k,3,count())));
+    $('loopStart').value='1';$('loopEnd').value=String(s.bars);syncLoop();syncCopyFields();updateKeyStatus();lock(!!s.locked);applying=false;previousDivide=divide();render();
+  }
+  let clipboard=null;
+  const measureSize=()=>Number(beatsSel.value)*divide();
+  function syncCopyFields(){
+    const max=Number(barsSel.value);
+    for(const id of ['copyStart','copyEnd','pasteStart']){
+      const field=$(id);field.max=String(max);
+      field.value=String(Math.max(1,Math.min(max,Math.round(Number(field.value)||1))));
+    }
+    if(Number($('copyEnd').value)<Number($('copyStart').value))$('copyEnd').value=$('copyStart').value;
+  }
+  function intervals(starts,held){
+    const out=[];
+    for(const item of starts){
+      const [row,start]=item.split(':').map(Number);let end=start+1;
+      while(held.has(key(row,end))&&end<count())end++;
+      out.push({row,start,end});
+    }
+    return out;
+  }
+  function makeTrack(list){
+    const starts=new Set(),held=new Set();
+    for(const {row,start,end} of list){
+      if(start>=end)continue;
+      starts.add(key(row,start));
+      for(let c=start+1;c<end;c++)held.add(key(row,c));
+    }
+    return [starts,held];
+  }
+  function copyTrack(starts,held,from,to){
+    return intervals(starts,held).filter(x=>x.start<to&&x.end>from)
+      .map(x=>({row:x.row,start:Math.max(x.start,from)-from,end:Math.min(x.end,to)-from}));
+  }
+  function pasteTrack(starts,held,clips,from,to){
+    const preserved=[];
+    for(const x of intervals(starts,held)){
+      if(x.start<from)preserved.push({...x,end:Math.min(x.end,from)});
+      if(x.end>to)preserved.push({...x,start:Math.max(x.start,to)});
+    }
+    return makeTrack(preserved.concat(clips.map(x=>({row:x.row,start:from+x.start,end:Math.min(to,from+x.end)}))));
+  }
+  $('copyBars').onclick=()=>{
+    syncCopyFields();const first=Number($('copyStart').value),last=Number($('copyEnd').value),size=measureSize(),from=(first-1)*size,to=last*size;
+    clipboard={chromatics:[...chromatics],beats:Number(beatsSel.value),divide:divide(),octaves:Number(octSel.value),key:keySel.value,bars:last-first+1,
+      melody:copyTrack(notes,holds,from,to),harmony:copyTrack(harmony,harmonyHolds,from,to),accomp:copyTrack(accomp,accompHolds,from,to),
+      rhythm:[...rhythm].map(k=>k.split(':').map(Number)).filter(([,c])=>c>=from&&c<to).map(([r,c])=>key(r,c-from))};
+    $('copyStatus').textContent=`${first}~${last}마디를 복사했습니다. 붙여넣을 시작 마디를 고르세요.`;
+  };
+  $('pasteBars').onclick=()=>{
+    if(!clipboard){$('copyStatus').textContent='먼저 마디를 복사해 주세요.';return}
+    if(JSON.stringify(clipboard.chromatics||[])!==JSON.stringify(chromatics)||clipboard.beats!==Number(beatsSel.value)||clipboard.divide!==divide()||clipboard.octaves!==Number(octSel.value)||clipboard.key!==keySel.value){
+      $('copyStatus').textContent='박자·나누기·옥타브·조표·반음 설정이 바뀌었습니다. 다시 복사해 주세요.';return;
+    }
+    syncCopyFields();const first=Number($('pasteStart').value),size=measureSize(),from=(first-1)*size,to=Math.min(count(),from+clipboard.bars*size);
+    stop();[notes,holds]=pasteTrack(notes,holds,clipboard.melody,from,to);
+    [harmony,harmonyHolds]=pasteTrack(harmony,harmonyHolds,clipboard.harmony||[],from,to);
+    if(!locked)[accomp,accompHolds]=pasteTrack(accomp,accompHolds,clipboard.accomp,from,to);
+      for(const k of [...rhythm]){const c=Number(k.split(':')[1]);if(c>=from&&c<to)rhythm.delete(k)}
+      for(const k of clipboard.rhythm){const [r,c]=k.split(':').map(Number);if(from+c<to)rhythm.add(key(r,from+c))}
+    render();$('copyStatus').textContent=`${first}마디부터 붙여넣었습니다.${locked?' 잠긴 반주는 그대로 두었습니다.':''}${to-from<clipboard.bars*size?' 끝을 넘는 부분은 제외했습니다.':''}`;
+  };
+  function scaleSet(set,oldD,newD){const result=new Set();for(const key of set){const [r,c]=key.split(':').map(Number);result.add(r+':'+Math.min(count()-1,Math.round(c*newD/oldD)))}return result}
+  function scaleTrack(starts,held,oldD,newD){
+    const nextStarts=new Set(),nextHeld=new Set(),ratio=newD/oldD;
+    for(const k of starts){
+      const [r,c]=k.split(':').map(Number);let length=1;
+      while(held.has(key(r,c+length)))length++;
+      const first=Math.min(count()-1,Math.round(c*ratio));
+      const last=Math.min(count()-1,Math.max(first,Math.round((c+length)*ratio)-1));
+      nextStarts.add(key(r,first));for(let at=first+1;at<=last;at++)nextHeld.add(key(r,at));
+    }
+    return [nextStarts,nextHeld];
+  }
+  function changeDivide(){
+    const oldD=previousDivide,newD=divide();if(oldD===newD)return;
+    if(newD<oldD&&[...notes,...accomp,...holds,...accompHolds,...harmony,...harmonyHolds,...rhythm].some(k=>Number(k.split(':')[1])%(oldD/newD)!==0)){
+      if(!confirm('짧게 나눠 찍은 음이 가장 가까운 새 칸으로 이동합니다. 계속할까요?')){divSel.value=oldD;return}
+    }
+    stop();[notes,holds]=scaleTrack(notes,holds,oldD,newD);
+    [accomp,accompHolds]=scaleTrack(accomp,accompHolds,oldD,newD);
+    [harmony,harmonyHolds]=scaleTrack(harmony,harmonyHolds,oldD,newD);selection=null;
+    rhythm=scaleSet(rhythm,oldD,newD);
+    previousDivide=newD;render();
+  }
+  let previousDivide=divide();
+  $('play').onclick=play;$('stop').onclick=stop;
+  $('clear').onclick=()=>{if(locked&&accomp.size){if(!confirm('잠긴 반주를 남기고 멜로디·화음·리듬을 지울까요?'))return;notes.clear();holds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear()}
+    else{notes.clear();accomp.clear();holds.clear();accompHolds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear()}stop();render()};
+  $('lockAccomp').onclick=()=>lock(!locked);
+  $('editTrack').onchange=()=>{if(locked&&$('editTrack').value==='accomp')$('editTrack').value='melody'};
+  $('loop').onclick=()=>{looping=!looping;$('loop').setAttribute('aria-pressed',String(looping));$('loop').textContent=looping?'↻ 선택 마디 반복: 켜짐':'↻ 선택 마디 반복: 꺼짐';if(playing)stop()};
+  $('loopStart').onchange=syncLoop;$('loopEnd').onchange=()=>{syncLoop();if(Number($('loopEnd').value)<Number($('loopStart').value))$('loopStart').value=$('loopEnd').value};
+  tempo.oninput=()=>tempoNumber.value=tempo.value;
+  tempoNumber.oninput=()=>{if(tempoNumber.value!==''&&Number.isFinite(Number(tempoNumber.value)))tempo.value=Math.max(50,Math.min(240,Number(tempoNumber.value)))};
+  tempoNumber.onchange=()=>{tempoNumber.value=Math.max(50,Math.min(240,Math.round(Number(tempoNumber.value)||120)));tempo.value=tempoNumber.value};
+  divSel.onchange=changeDivide;
+  octSel.onchange=()=>{
+    stop();const previous=renderedOctaves,oldRows=rows(previous),target=new Map(rows().map((r,i)=>[midi(r),i]));
+    const tracks=[notes,holds,harmony,harmonyHolds,accomp,accompHolds];
+    if(tracks.some(set=>[...set].some(k=>!target.has(midi(oldRows[Number(k.split(':')[0])]))))){
+      octSel.value=String(previous);$('editStatus').textContent='선택한 옥타브 범위를 벗어나는 음이 있어 변경하지 않았어요. 음을 옮기거나 지운 뒤 줄여 주세요.';return;
+    }
+    for(const set of tracks){const moved=[...set].map(k=>{const [r,c]=k.split(':').map(Number);return key(target.get(midi(oldRows[r])),c)});set.clear();moved.forEach(k=>set.add(k))}
+    selection=null;drag=null;updateKeyStatus();render();$('editStatus').textContent='옥타브를 변경했어요. 기존 음 높이·길이·반주·리듬은 그대로 유지됩니다.';
+  };
+  barsSel.onchange=()=>{
+    stop();selection=null;
+    for(const set of [notes,holds,harmony,harmonyHolds,accomp,accompHolds,rhythm])for(const item of [...set])if(Number(item.split(':')[1])>=count())set.delete(item);
+    syncLoop();syncCopyFields();render();
+  };
+  beatsSel.onchange=()=>{stop();selection=null;notes.clear();accomp.clear();holds.clear();accompHolds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear();render()};
+  keySel.onchange=()=>{
+    stop();const previous=renderedKey,oldRows=rows(Number(octSel.value),previous),newRows=rows(),baseRows=rows(Number(octSel.value),keySel.value,[]);
+    const oldBase=rows(Number(octSel.value),previous,[]),delta=midi(baseRows[baseRows.length-1])-midi(oldBase[oldBase.length-1],previous);
+    const destination=r=>r.added?midi(r,previous)+delta:midi(baseRows.find(n=>n.degree===r.degree));
+    if(!remapRows(oldRows,newRows,destination)){keySel.value=previous;$('chromaticStatus').textContent='변경할 조의 음계와 반음 선택에 없는 음이 있어 조표를 바꾸지 않았어요. 해당 음을 옮기거나 지운 뒤 다시 시도해 주세요.';syncChromatics();return;}
+    updateKeyStatus();render();updateExampleInfo();
+  };instSel.onchange=()=>{stop();$('audioStatus').textContent='첫 재생 시 실제 악기 음원을 불러옵니다. 인터넷 연결이 필요합니다.'};
+  // Examples are written as scale degrees and follow the currently selected key.
+  const examples=[
+    ['twinkle_melody','작은별 · 멜로디','12마디 · 윗성부 멜로디'],
+    ['twinkle_accomp','작은별 · 멜로디 + 코드반주','멜로디와 아래쪽 코드반주를 함께 연주합니다.'],
+    ['twinkle_harmony','작은별 · 멜로디 + 화음','3도 화음이 기본이며, 코드에 맞지 않을 때만 4도·5도로 조정합니다.'],
+    ['twinkle_full','작은별 · 멜로디 + 코드반주 + 화음','두 성부 멜로디와 코드반주를 함께 연주합니다.'],
+    ['butterfly_melody','나비야 · 멜로디','16마디 · 윗성부 멜로디'],
+    ['butterfly_accomp','나비야 · 멜로디 + 코드반주','멜로디와 아래쪽 코드반주를 함께 연주합니다.'],
+    ['butterfly_harmony','나비야 · 멜로디 + 화음','3도 화음이 기본이며, 코드에 맞지 않을 때만 4도·5도로 조정합니다.'],
+    ['butterfly_full','나비야 · 멜로디 + 코드반주 + 화음','두 성부 멜로디와 코드반주를 함께 연주합니다.'],
+    ...['melody','accomp','harmony','full'].map((kind,i)=>['canon_'+kind,'캐논 · '+['멜로디','멜로디 + 코드반주','멜로디 + 화음','멜로디 + 코드반주 + 화음'][i],'파헬벨 캐논 도입부 · 8마디 쉬운 편곡 · 현재 조로 연주 (원조: 라장조)']),
+    ['money','머니코드 · 현재 조로 만들기','현재 조의 I–V–vi–IV · 멜로디를 직접 넣어 보세요']
+  ];
+  for(const [id,title] of examples){const opt=document.createElement('option');opt.value=id;opt.textContent=title;$('example').appendChild(opt)}
+  const progressions={none:'C–G–Am–F',fsharp:'G–D–Em–C','fsharp-csharp':'D–A–Bm–G','fsharp-csharp-gsharp':'A–E–F♯m–D',bflat:'F–C–Dm–B♭','bflat-eflat':'B♭–F–Gm–E♭','bflat-eflat-aflat':'E♭–B♭–Cm–A♭'};
+  function updateExampleInfo(){
+    const id=$('example').value;
+    $('moneyStyleWrap').hidden=id!=='money';
+    $('exampleInfo').textContent=id==='money'?`${currentKey().major}: ${progressions[keySel.value]} · ${$('moneyStyle').selectedOptions[0].textContent} · 위에 멜로디를 찍어 보세요`:
+      (examples.find(x=>x[0]===id)?.[2]||'작은별·나비야·캐논과 머니코드 반주를 골라 들어 볼 수 있습니다.')+(id.startsWith('twinkle')||id.startsWith('butterfly')||id.startsWith('canon')?' · 불러오면 기존 작업이 삭제되고 3옥타브로 변경됩니다.':'');
+  }
+  $('example').onchange=updateExampleInfo;$('moneyStyle').onchange=updateExampleInfo;
+  // Melodies arranged in 4/4. A null after a note extends it for one beat.
+  const twinkle=[
+    72,72,79,79,81,81,79,null,77,77,76,76,74,74,72,null,
+    79,79,77,77,76,76,74,null,79,79,77,77,76,76,74,null,
+    72,72,79,79,81,81,79,null,77,77,76,76,74,74,72,null
+  ];
+  const butterfly=[79, 76, 76, null, 77, 74, 74, null, 72, 74, 76, 77, 79, 79, 79, null, 79, 76, 76, null, 77, 74, 74, null, 72, 76, 79, 79, 72, null, null, null, 74, 74, 74, 74, 74, 76, 77, null, 76, 76, 76, 76, 76, 77, 79, null, 79, 76, 76, null, 77, 74, 74, null, 72, 76, 79, 79, 72, null, null, null];
+  // Public-domain opening violin line, independently reduced to half notes.
+  const canon=[2,1,0,-1,-2,-3,-2,-1,0,-1,-2,-3,-4,-5,-4,-6].flatMap(d=>[d+14,null]);
+  const cMajorDegree={72:0,74:1,76:2,77:3,79:4,81:5,83:6};
+  function degreePitch(degree){
+    const start=names.indexOf(currentKey().tonic),n=start+degree,name=names[n%7],octave=4+Math.floor(n/7);
+    return 60+12*(octave-4)+semis[name]+((mods[keySel.value]||{})[name]||0);
+  }
+  function chord(root,seventh=false,targetOctaves=Number(octSel.value)){
+    const fit=degree=>targetOctaves===1?degree%7:degree;
+    const degrees=[root,root+2,root+4,...(seventh?[root+6]:[])];
+    return degrees.map(degree=>degreePitch(fit(degree)));
+  }
+  const chordsByName={C:()=>chord(0),F:()=>chord(3),G:()=>chord(4),G7:()=>chord(4,true)};
+  // Two harmonic regions per bar; Twinkle uses I/IV/V and Butterfly Bell I/IV/V7.
+  const songChords={
+    twinkle:[['C','C'],['F','C'],['F','C'],['G','C'],['C','F'],['C','G'],['C','F'],['C','G'],['C','C'],['F','C'],['F','C'],['G','C']],
+    canon:Array.from({length:8},(_,i)=>[['C','G'],['Am','Em'],['F','C'],['F','G']][i%4]),
+    butterfly:[['C','C'],['G7','G7'],['C','G7'],['C','C'],['C','C'],['G7','G7'],['C','G'],['C','C'],['G7','G7'],['G7','G7'],['C','C'],['C','G7'],['C','C'],['G7','G7'],['C','G'],['C','C']]
+  };
+  // Prefer a diatonic third below the melody. Only when that note is
+  // outside the current chord, try a fourth and then a fifth below.
+  const songChordDegrees={Am:[5,0,2],Em:[2,4,6],C:[0,2,4],F:[3,5,0],G:[4,6,1],G7:[4,6,1,3]};
+  function lowerVoiceDegree(song,beat,upper){
+    const tones=songChordDegrees[songChordAt(song,beat)];
+    for(const distance of [2,3,4]){
+      const lower=upper-distance;
+      if(tones.includes((lower%7+7)%7))return lower;
+    }
+    throw Error('현재 코드에 맞는 3도·4도·5도 아랫성부가 없습니다.');
+  }
+  function songChordAt(song,beat){
+    return songChords[song][Math.floor(beat/4)][Math.floor((beat%4)/2)];
+  }
+  function exampleState(id){
+    const isTwinkle=id.startsWith('twinkle'),isButterfly=id.startsWith('butterfly'),isCanon=id.startsWith('canon'),isMoney=id==='money';
+    if(!isTwinkle&&!isButterfly&&!isCanon&&!isMoney)throw Error('예시 없음');
+    const melody=isTwinkle?twinkle:isButterfly?butterfly:isCanon?canon:[];
+    const song=isTwinkle?'twinkle':isCanon?'canon':'butterfly';
+    const bars=isTwinkle?12:isButterfly?16:8,d=divide(),octaves=isMoney?Number(octSel.value):3,selectedKey=keySel.value;
+    const index=new Map(rows(octaves).map((r,i)=>[midi(r),i]));
+    const n=[],a=[],h=[],ah=[],rh=[],hn=[],hh=[];
+    const add=(pitch,beat,track=n,held=h,length=1)=>{
+      const row=index.get(pitch),start=beat*d;if(row===undefined||start>=bars*4*d)return;
+      track.push(key(row,start));
+      for(let c=start+1;c<Math.min(bars*4*d,start+length*d);c++)held.push(key(row,c));
+    };
+    for(let beat=0;beat<melody.length;beat++){
+      if(melody[beat]===null)continue;
+      let length=1;while(melody[beat+length]===null)length++;
+      const upper=isCanon?melody[beat]:cMajorDegree[melody[beat]]+7;
+      add(degreePitch(upper),beat,n,h,length);
+      if(id.endsWith('harmony')||id.endsWith('full'))add(degreePitch(lowerVoiceDegree(song,beat,upper)),beat,hn,hh,length);
+    }
+    if(isMoney){
+      const style=$('moneyStyle').value,roots=[0,4,5,3];
+      for(let bar=0;bar<bars;bar++){
+        const chordPitches=chord(roots[bar%4]),[low,middle,high]=[...chordPitches].sort((x,y)=>x-y),beat=bar*4;
+        if(style==='block')chordPitches.forEach(p=>add(p,beat,a,ah,4));
+        else (style==='alberti'?[low,high,middle,high]:[low,middle,high,middle]).forEach((p,i)=>add(p,beat+i,a,ah));
+      }
+    }else if(id.endsWith('accomp')||id.endsWith('full')){
+      for(let beat=0;beat<bars*4;){
+        const name=songChordAt(song,beat);
+        let length=1;
+        while(beat+length<bars*4&&(beat+length)%4!==0&&songChordAt(song,beat+length)===name)length++;
+        chord({C:0,F:3,G:4,G7:4,Am:5,Em:2}[name],name==='G7',1).forEach(p=>add(p,beat,a,ah,length));
+        beat+=length;
+      }
+    }
+    return {v:18,chromatics:[...chromatics],octaves,bars,beats:4,divide:d,key:selectedKey,instrument:instSel.value,tempo:Number(tempo.value),notes:n,accomp:a,holds:h,accompHolds:ah,rhythm:rh,mix:{...mix},muted:{...muted},harmony:hn,harmonyHolds:hh,locked:isMoney||id.endsWith('accomp')||id.endsWith('full')};
+  }
+  function setDrawer(open){
+    $('toolDrawer').classList.toggle('open',open);
+    $('drawerToggle').setAttribute('aria-expanded',String(open));
+    $('drawerToggle').textContent=open?'✕ 기능 닫기':'☰ 다양한 기능';
+    $('drawerBackdrop').hidden=!open;
+  }
+  $('drawerToggle').onclick=()=>setDrawer(!$('toolDrawer').classList.contains('open'));
+  $('drawerClose').onclick=()=>setDrawer(false);
+  $('drawerBackdrop').onclick=()=>setDrawer(false);
+  function hideExampleConfirm(){ $('exampleConfirm').hidden=true; }
+  $('example').addEventListener('change',hideExampleConfirm);
+  $('cancelExample').onclick=hideExampleConfirm;
+  $('loadExample').onclick=()=>{
+    const id=$('example').value;
+    if(!id){$('exampleInfo').textContent='먼저 예시를 선택해 주세요.';return}
+    $('exampleConfirmText').textContent=id==='money'?'현재 작업을 지우고 머니코드 반주를 불러올까요? 필요하면 먼저 화면 위에서 임시저장하세요.':'현재 작업을 지우고 3옥타브로 바꾼 뒤 예시곡을 불러올까요? 필요하면 먼저 임시저장하세요.';
+    $('exampleConfirm').hidden=false;
+    $('confirmExample').focus();
+  };
+  $('confirmExample').onclick=()=>{
+    const id=$('example').value;
+    if(!id){hideExampleConfirm();return}
+    try{
+      apply(exampleState(id));previousDivide=divide();hideExampleConfirm();updateExampleInfo();
+      $('exampleInfo').textContent+=' · 악보에 불러왔습니다.';
+      setDrawer(false);$('grid').scrollIntoView({block:'start'});
+    }catch(e){$('exampleInfo').textContent='예시곡을 불러오지 못했습니다. 다른 예시를 선택하거나 페이지를 새로 열어 주세요.';console.error(e)}
+  };
+  $('save').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(state(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='나의작곡.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+  $('share').onclick=()=>{$('sharePanel').classList.add('show');$('shareCode').value=encode();$('shareCode').select();$('msg').textContent='공유 코드가 만들어졌습니다.'};
+  $('load').onclick=()=>{try{const bin=atob($('loadCode').value.trim()),s=JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))));apply(s);previousDivide=divide();$('msg').textContent='작품을 불러왔습니다.'}catch(e){$('msg').textContent='공유 코드를 확인해 주세요.'}};
+  function commitHistory(){
+    if(!historyReady||historyMoving||applying||drag||selecting)return;
+    const serialized=JSON.stringify(state());
+    if(history[historyIndex]!==serialized){history=history.slice(0,historyIndex+1);history.push(serialized);if(history.length>80)history.shift();historyIndex=history.length-1}
+    $('undo').disabled=historyIndex<=0;$('redo').disabled=historyIndex>=history.length-1;
+  }
+  function travelHistory(delta){
+    const next=historyIndex+delta;if(next<0||next>=history.length)return;
+    historyMoving=true;try{apply(JSON.parse(history[next]));historyIndex=next}finally{historyMoving=false}
+    commitHistory();$('editStatus').textContent=delta<0?'이전 작업으로 되돌렸습니다.':'다음 작업을 다시 실행했습니다.';
+  }
+  $('undo').onclick=()=>travelHistory(-1);$('redo').onclick=()=>travelHistory(1);
+  document.addEventListener('keydown',e=>{
+    if(!(e.ctrlKey||e.metaKey)||['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;
+    if(e.key.toLowerCase()==='z'){e.preventDefault();travelHistory(e.shiftKey?1:-1)}
+    else if(e.key.toLowerCase()==='y'){e.preventDefault();travelHistory(1)}
+  });
+  function selectedCell(r,c){return !!selection&&r>=Math.min(selection.r0,selection.r1)&&r<=Math.max(selection.r0,selection.r1)&&c>=Math.min(selection.c0,selection.c1)&&c<=Math.max(selection.c0,selection.c1)}
+  function markSelection(){
+    $('grid').querySelectorAll('[data-row][data-col]').forEach(e=>e.classList.toggle('selected',selectedCell(Number(e.dataset.row),Number(e.dataset.col))));
+    $('editStatus').textContent=selection?'선택한 음은 테두리로 표시됩니다. 오른쪽 서랍에서 높이를 바꾸세요.':'선택을 해제했습니다.';
+  }
+  $('selectMode').onchange=()=>{if($('selectMode').value==='draw'){selection=null;markSelection()}setDrawer(false)};
+  function putTrack(track,start,held){if(track==='accomp'){accomp=start;accompHolds=held}else if(track==='harmony'){harmony=start;harmonyHolds=held}else{notes=start;holds=held}}
+  function mergedTrack(list){
+    const sorted=list.filter(x=>x.start<x.end).sort((a,b)=>a.row-b.row||a.start-b.start),merged=[];
+    for(const x of sorted){const prev=merged[merged.length-1];if(prev&&prev.row===x.row&&x.start<prev.end)prev.end=Math.max(prev.end,x.end);else merged.push({...x})}
+    return makeTrack(merged);
+  }
+  function transposeNotes(amount){
+    const scope=$('moveScope').value,track=$('moveTrack').value;
+    if(scope==='selection'&&!selection){$('moveStatus').textContent='먼저 선택 모드에서 악보의 음을 드래그해 고르세요.';return}
+    const first=Math.max(1,Math.min(Number(barsSel.value),Math.round(Number($('moveStart').value))||1)),last=Math.max(first,Math.min(Number(barsSel.value),Math.round(Number($('moveEnd').value))||first));
+    const targets=track==='all'?['melody','harmony',...(locked?[]:['accomp'])]:[track];
+    if(locked&&targets.includes('accomp')){$('moveStatus').textContent='반주 잠금을 먼저 풀어 주세요.';return}
+    const changes=[];let changed=0;
+    for(const name of targets){
+      const list=intervals(editSet(name),heldSet(name));
+      for(const x of list){
+        const chosen=scope==='selection'?x.row>=Math.min(selection.r0,selection.r1)&&x.row<=Math.max(selection.r0,selection.r1)&&x.start<=Math.max(selection.c0,selection.c1)&&x.end>Math.min(selection.c0,selection.c1):x.start<last*measureSize()&&x.end>(first-1)*measureSize();
+        if(!chosen)continue;
+        const all=rows(),destination=Math.abs(amount)===7?all.findIndex(r=>midi(r)===midi(all[x.row])+Math.sign(amount)*12):x.row-amount;
+        if(destination<0||destination>=all.length){$('moveStatus').textContent='선택한 음이 현재 음역을 벗어납니다. 이동하지 않았습니다.';return}
+        x.row=destination;changed++;
+      }
+      changes.push([name,list]);
+    }
+    if(!changed){$('moveStatus').textContent='선택한 범위와 파트에 이동할 음이 없습니다.';return}
+    stop();for(const [name,list] of changes)putTrack(name,...mergedTrack(list));
+    if(scope==='selection')selection=null;
+    render();$('moveStatus').textContent=`${changed}개 음을 ${amount>0?'위':'아래'}로 ${Math.abs(amount)===7?'한 옥타브':'한 음'} 이동했습니다.${track==='all'&&locked?' 잠긴 반주는 유지했습니다.':''}`;
+  }
+  $('moveUp').onclick=()=>transposeNotes(1);$('moveDown').onclick=()=>transposeNotes(-1);
+  $('octaveUp').onclick=()=>transposeNotes(7);$('octaveDown').onclick=()=>transposeNotes(-7);
+  function syncMixer(){
+    for(const track of ['melody','harmony','accomp','rhythm']){
+      $('volume_'+track).value=String(mix[track]);$('volumeLabel_'+track).textContent=mix[track]+'%';$('mute_'+track).checked=muted[track];
+      if(liveBuses[track]&&ctx)liveBuses[track].gain.setValueAtTime(muted[track]?0:mix[track]/100,ctx.currentTime);
+    }
+  }
+  for(const track of ['melody','harmony','accomp','rhythm']){
+    $('volume_'+track).oninput=()=>{mix[track]=Number($('volume_'+track).value);syncMixer()};
+    $('volume_'+track).onchange=commitHistory;
+    $('mute_'+track).onchange=()=>{muted[track]=$('mute_'+track).checked;syncMixer();commitHistory()};
+  }
+  for(const field of [tempo,tempoNumber,instSel]){const previous=field.onchange;field.onchange=e=>{previous?.(e);commitHistory()}}
+  $('loadFile').onchange=async()=>{const file=$('loadFile').files?.[0];if(!file)return;try{apply(JSON.parse(await file.text()));$('fileStatus').textContent='작곡 파일을 불러왔습니다. 실행 취소로 되돌릴 수 있어요.'}catch(e){$('fileStatus').textContent='작곡실에서 저장한 JSON 파일인지 확인해 주세요.'}finally{$('loadFile').value=''}};
+
+  const helpSteps=[
+    {target:'#chromaticControls',title:'반음을 추가해 보세요',body:'설정에서 도♯/레♭처럼 추가할 음을 체크하세요. 같은 소리를 두 이름으로 표시하며 회색 행으로 구분해요. 입력한 음이 있는 행은 지워지지 않도록 해제를 막아요.',demo:'설정 → 추가할 반음 선택 → 회색 칸에 음 찍기'},
+    {target:'#undo',title:'마음껏 바꾸고 되돌려요',body:'잘못 고쳤다면 실행 취소를 누르세요. 다시 실행도 할 수 있어요. Ctrl 또는 Command와 Z를 함께 눌러도 돼요.',demo:'수정 → 실행 취소 → 다시 실행'},
+    {target:'#selectMode',title:'음 높이를 바꿔 보세요',body:'드래그로 음 선택하기를 고른 뒤 악보에서 영역을 그리세요. 서랍에서 선택한 음 또는 마디의 높이를 바꿀 수 있어요.',demo:'선택 → 한 음 ↑ 또는 옥타브 ↓'},
+    {target:'#volume_harmony',title:'파트를 따로 들어요',body:'멜로디·화음·반주·리듬을 각각 음소거하거나 음량을 조절해 보세요. 화음은 점선 테두리로 표시돼요.',demo:'반주 음소거 → 멜로디와 화음만 듣기'},
+    {target:'#exportAudio',title:'내 곡을 소리 파일로 저장해요',body:'WAV 파일로 저장하면 발표 자료나 영상에 넣을 수 있어요. 현재 음량과 음소거 설정도 반영돼요.',demo:'파트 음량 조절 → WAV 저장'},
+    {target:'#example',title:'먼저 예시를 골라 보세요',body:'작은별·나비야·캐논·머니코드 중 고르세요. 머니코드는 반주 모양도 선택할 수 있어요. 머니코드는 현재 옥타브로, 작은별·나비야·캐논은 3옥타브로 불러옵니다.',demo:'① 조표·옥타브 선택 → ② 예시 선택 → ③ 불러오기'},
+    {target:'#grid .step[data-row][data-col="0"]',title:'칸을 눌러 음을 넣어요',body:'왼쪽의 도·레·미를 보고 원하는 높이의 네모를 누르세요. 색이 나타나면 음이 들어간 거예요. 다시 누르면 지워집니다.',demo:'도 <span class="demo-on"></span><span></span><span class="demo-on"></span> → 시간을 따라 왼쪽에서 오른쪽으로'},
+    {target:'#grid .step[data-row][data-col="0"]',title:'옆으로 밀면 긴 음이 돼요',body:'한 칸을 누른 채 같은 높이의 오른쪽 칸으로 쭉 밀어 보세요. 두 박이면 2분음표, 네 박이면 온음표처럼 한 번만 길게 납니다.',demo:'도 <span class="demo-on"></span><span class="demo-hold"></span><span class="demo-hold"></span><span class="demo-hold"></span> → 한 번 길게'},
+    {target:'#divide',title:'짧은 음도 만들 수 있어요',body:'「한 박 나누기」에서 반으로를 고르면 8분음표 칸, 반의 반을 고르면 16분음표 칸이 생깁니다. 다시 큰 칸으로 바꾸면 짧은 음의 위치가 조정될 수 있어요.',demo:'1박 = □ · 반으로 = □□ · 반의 반 = □□□□'},
+    {target:'#lockAccomp',title:'반주를 지키고 멜로디를 써요',body:'회색은 반주예요. 잠금은 반주 칸만 보호해요. 리듬은 잠금과 관계없이 찍거나 지울 수 있어요. 직접 반주를 쓰고 싶으면 잠금을 풀고 「찍을 칸」을 반주로 바꾸세요.',demo:'멜로디 <span class="demo-on"></span>  반주 <span class="demo-back"></span>  🔒 잠금'},
+    {target:'#loop',title:'원하는 마디를 반복해서 들어요',body:'시작 마디와 끝 마디를 정하고 반복을 켠 다음 재생하세요. 그 부분이 계속 나오고, 정지를 누르면 멈춰요.',demo:'시작 1마디 → 끝 2마디 → ↻ 반복 켜기 → ▶'},
+    {target:'#copyBars',title:'마디를 복사해서 붙여넣어요',body:'복사할 시작과 끝 마디를 적고 복사하세요. 붙여넣을 시작 마디를 골라 붙여넣으면 기존 칸이 바뀝니다. 잠긴 반주는 그대로 남고, 리듬은 함께 붙여넣어져요.',demo:'1~2마디 복사 → 5마디부터 붙여넣기'},
+    {target:'#tempSave',title:'바꾸기 전에 임시저장해요',body:'임시저장은 이 화면이 열려 있는 동안만 남아요. 새로고침하거나 창을 닫으면 사라져요. 오래 보관하려면 「파일로 저장」을 눌러 주세요.',demo:'임시저장 → 다른 예시 불러오기 → 이전 작업 복원'},
+    {target:'#save',title:'작품을 저장하고 공유해요',body:'「파일로 저장」은 작곡 내용을 JSON 파일로 내려받아요. 「공유 코드」는 친구에게 보낼 문자를 만들어 줍니다. 연주 전에 재생 버튼도 눌러 보세요!',demo:'💾 저장  ·  🔗 공유 코드  ·  ▶ 재생'}
+  ];
+  let helpIndex=0,helpTarget=null;
+  function closeHelp(){
+    $('helpShade').classList.remove('show');$('helpShade').setAttribute('aria-hidden','true');
+    $('toolDrawer').classList.remove('helping');setDrawer(false);
+    helpTarget?.classList.remove('help-focus');helpTarget=null;$('drawerToggle').focus();
+  }
+  function showHelp(index){
+    helpIndex=Math.max(0,Math.min(helpSteps.length-1,index));
+    helpTarget?.classList.remove('help-focus');const step=helpSteps[helpIndex];
+    helpTarget=document.querySelector(step.target);
+    const detail=helpTarget?.closest?.('details');if(detail)detail.open=true;
+    const inDrawer=$('toolDrawer').contains(helpTarget);
+    setDrawer(inDrawer);$('toolDrawer').classList.toggle('helping',inDrawer);
+    if(helpTarget){helpTarget.classList.add('help-focus');helpTarget.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'})}
+    $('helpTitle').textContent=step.title;$('helpBody').textContent=step.body;$('helpDemo').innerHTML=step.demo;
+    $('helpCounter').textContent='도움말 '+(helpIndex+1)+' / '+helpSteps.length;
+    $('helpPosition').textContent=(helpIndex+1)+' / '+helpSteps.length;
+    $('helpPrev').disabled=helpIndex===0;$('helpNext').textContent=helpIndex===helpSteps.length-1?'완료':'다음 →';
+    const card=$('helpCard');
+    requestAnimationFrame(()=>{
+      if(!helpTarget)return;const box=helpTarget.getBoundingClientRect();
+      card.style.left=Math.min(window.innerWidth-card.offsetWidth-12,Math.max(12,box.left))+'px';
+      card.style.top=(box.bottom+card.offsetHeight+15<window.innerHeight?box.bottom+15:Math.max(12,box.top-card.offsetHeight-16))+'px';
+    });
+  }
+  $('helpButton').onclick=()=>{
+    $('helpTeaser').classList.add('hidden');try{localStorage.setItem('composer_help_seen_v5','1')}catch(e){}
+    $('helpShade').classList.add('show');$('helpShade').setAttribute('aria-hidden','false');showHelp(0);$('helpClose').focus();
+  };
+  $('helpClose').onclick=closeHelp;
+  $('helpNext').onclick=()=>helpIndex===helpSteps.length-1?closeHelp():showHelp(helpIndex+1);
+  $('helpPrev').onclick=()=>showHelp(helpIndex-1);
+  $('helpShade').onclick=e=>{if(e.target===$('helpShade'))closeHelp()};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('helpShade').classList.contains('show'))closeHelp()});
+  try{if(localStorage.getItem('composer_help_seen_v5'))$('helpTeaser').classList.add('hidden')}catch(e){}
+
+  window.ComposerBoard={
+    get:()=>JSON.parse(JSON.stringify(state())),
+    rowCount:s=>rows(s.octaves,s.key,s.chromatics||[]).length,
+    stop,
+    import:s=>{$('tempSave').onclick();apply(s);previousDivide=divide();$('editStatus').textContent='현재 작업을 임시저장하고 작품 사본을 불러왔어요.';},
+    preview:async s=>{stop();const id=playId,a=audio(),score=scoreEvents(s,0,s.bars*s.beats*s.divide),buffers=await prepareSounds(s,score.events);if(id!==playId)return;
+      const buses=outputBuses(a,s.mix,s.muted);playing=true;scheduleScore(a,score,buffers,a.currentTime+.025,buses,s.instrument,true);
+      timers.push(setTimeout(()=>{if(id===playId)playing=false;for(const bus of Object.values(buses))bus.disconnect()},score.seconds*1000+500));}
+  };
+  syncLoop();syncCopyFields();updateKeyStatus();syncMixer();render();historyReady=true;commitHistory();
+})();
+
+</script>
+<footer class="wrap" style="font-size:12px;color:#6b7280">악기 음원: FluidR3_GM SoundFont · CC BY 3.0 · <a href="https://gleitz.github.io/midi-js-soundfonts/" target="_blank" rel="noopener">출처와 라이선스</a>. 리듬 소리는 이 페이지에서 생성합니다. 예시 반주 코드 참고: <a href="https://www.pianolessons4children.com/lessons/twinkle-twinkle-little-star.php" target="_blank" rel="noopener">작은별</a>.<details style="margin-top:8px"><summary>음원 출처·배포 전 확인</summary><p>FluidR3_GM — 원 SoundFont: Frank Wen 및 기여자. MIDI.js용 렌더링: Benjamin Gleitzman. 배포처가 표시한 음원 이용 조건: <a href="https://creativecommons.org/licenses/by/3.0/us/" target="_blank" rel="noopener">CC BY 3.0 US</a>. 이 앱은 재생 시 음량·길이를 조정하고 여러 음을 합성합니다. 음원 및 이를 포함한 결과물을 공유할 때 출처와 이용 조건을 함께 표시하세요. 배포 도구의 <a href="https://github.com/gleitz/midi-js-soundfonts/blob/gh-pages/LICENSE.txt" target="_blank" rel="noopener">MIT 라이선스</a>도 참고하세요.</p><p>캐논: Johann Pachelbel의 보호기간이 만료된 원곡 도입부를 현재 조에 맞게 축약한 8마디 예시입니다. 원곡 전체나 원래의 돌림노래 성부를 재현한 악보는 아닙니다. 현대 편곡 악보나 상업 녹음은 사용하지 않았습니다.</p><p>나비야: 오래된 민요 선율(Hänschen klein). <a href="https://www.liederprojekt.org/lied30300-Haenschen_klein_ging_allein.html" target="_blank" rel="noopener">선율의 역사 출처</a>에서 1807년 전승 선율을 확인했습니다. 한국어 가사·현대 편곡 악보·녹음은 포함하지 않았으며, 코드반주와 아랫성부는 이 앱에서 구성했습니다.</p></details><div style="margin-top:22px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:13px;line-height:1.9;text-align:center"><div>만든 사람 <strong>송쌔미</strong></div><div>건의 및 문의사항 · <a href="mailto:yunsoo1205@naver.com">yunsoo1205@naver.com</a></div></div></footer>
+<script id="setupSQL" type="text/plain">
+-- 작품마당 v1 / 새 Supabase 프로젝트의 SQL Editor에서 실행
+begin;
+create table public.music_works (
+ id uuid primary key default gen_random_uuid(),
+ owner_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+ title text not null check(char_length(trim(title)) between 1 and 80),
+ nickname text not null check(char_length(trim(nickname)) between 1 and 30),
+ description text not null default '' check(char_length(description)<=500),
+ score jsonb not null check(jsonb_typeof(score)='object' and octet_length(score::text)<=300000),
+ source_id uuid references public.music_works(id) on delete set null,
+ created_at timestamptz not null default now()
+);
+create table public.music_likes (
+ work_id uuid references public.music_works(id) on delete cascade,
+ user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+ primary key(work_id,user_id)
+);
+create table public.music_remixes (
+ work_id uuid references public.music_works(id) on delete cascade,
+ user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+ primary key(work_id,user_id)
+);
+create index music_works_date on public.music_works(created_at desc);
+alter table public.music_works enable row level security;
+alter table public.music_likes enable row level security;
+alter table public.music_remixes enable row level security;
+revoke all on public.music_works,public.music_likes,public.music_remixes from anon,authenticated;
+grant select on public.music_works to authenticated;
+grant insert(title,nickname,description,score,source_id) on public.music_works to authenticated;
+grant delete on public.music_works to authenticated;
+grant select,delete on public.music_likes to authenticated;
+grant insert(work_id) on public.music_likes to authenticated;
+grant select on public.music_remixes to authenticated;
+grant insert(work_id) on public.music_remixes to authenticated;
+create policy works_read on public.music_works for select to authenticated using(true);
+create policy works_create on public.music_works for insert to authenticated with check(owner_id=auth.uid());
+create policy works_delete on public.music_works for delete to authenticated using(owner_id=auth.uid());
+create policy likes_read on public.music_likes for select to authenticated using(user_id=auth.uid());
+create policy likes_add on public.music_likes for insert to authenticated with check(user_id=auth.uid());
+create policy likes_delete on public.music_likes for delete to authenticated using(user_id=auth.uid());
+create policy remixes_read on public.music_remixes for select to authenticated using(user_id=auth.uid());
+create policy remixes_add on public.music_remixes for insert to authenticated with check(user_id=auth.uid());
+-- Counts are derived, never accepted from the browser. Identity comes from Auth.
+create function public.music_gallery(sort_by text default 'new',page_number integer default 0,only_mine boolean default false,work_filter uuid default null)
+returns table(id uuid,owner_id uuid,title text,nickname text,description text,source_id uuid,created_at timestamptz,likes bigint,remixes bigint,liked boolean)
+language sql stable security definer set search_path='' as $$
+ select w.id,w.owner_id,w.title,w.nickname,w.description,w.source_id,w.created_at,
+ (select count(*) from public.music_likes l where l.work_id=w.id) as likes,
+ (select count(*) from public.music_remixes r where r.work_id=w.id) as remixes,
+ exists(select 1 from public.music_likes l where l.work_id=w.id and l.user_id=auth.uid()) as liked
+ from public.music_works w
+ where auth.uid() is not null and (work_filter is null or w.id=work_filter) and (not only_mine or w.owner_id=auth.uid())
+ order by case when sort_by='likes' then (select count(*) from public.music_likes l where l.work_id=w.id) end desc,
+ case when sort_by='remixes' then (select count(*) from public.music_remixes r where r.work_id=w.id) end desc,
+ w.created_at desc,w.id
+ limit 12 offset greatest(0,least(page_number,100000))*12;
+$$;
+revoke all on function public.music_gallery(text,integer,boolean,uuid) from public,anon,authenticated;
+grant execute on function public.music_gallery(text,integer,boolean,uuid) to authenticated;
+commit;
+</script>
+<script>
+(() => {
+ const $=id=>document.getElementById(id),cfg=window.MUSIC_BOARD_CONFIG;
+ let db,user=null,page=0,request=0,sourceId=null,busy=false,openedId=null;
+ const status=t=>$('boardStatus').textContent=t;
+ const err=e=>{console.error(e);status(e.message==='Failed to fetch'?'연결되지 않았어요. 인터넷 연결과 Supabase 설정을 확인해 주세요.':e.message||'작업을 완료하지 못했어요.')};
+ const check=r=>{if(r.error)throw r.error;return r.data};
+ const node=(tag,text,cls)=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n};
+ const action=(label,fn)=>{const b=node('button',label);b.type='button';b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){err(e)}finally{b.disabled=false}};return b};
+ function safeScore(raw){
+  if(!raw||![1,2,3,4].includes(raw.octaves)||![8,12,16,24,32].includes(raw.bars)||![2,3,4].includes(raw.beats)||![1,2,4].includes(raw.divide))throw Error('올바른 작품 데이터가 아니에요.');
+  if(!['none','fsharp','fsharp-csharp','fsharp-csharp-gsharp','bflat','bflat-eflat','bflat-eflat-aflat'].includes(raw.key))throw Error('조표 오류');
+  const s={v:18,chromatics:[...new Set(Array.isArray(raw.chromatics)?raw.chromatics:[])].filter(n=>[1,3,6,8,10].includes(n)).sort((a,b)=>a-b),octaves:raw.octaves,bars:raw.bars,beats:raw.beats,divide:raw.divide,key:raw.key,instrument:raw.instrument==='piano'?'piano':'marimba',tempo:Math.max(50,Math.min(240,Number(raw.tempo)||120)),locked:!!raw.locked,mix:{},muted:{}};
+  for(const t of ['melody','harmony','accomp','rhythm']){s.mix[t]=Math.max(0,Math.min(100,Number(raw.mix?.[t])||0));s.muted[t]=!!raw.muted?.[t]}
+  for(const t of ['notes','holds','harmony','harmonyHolds','accomp','accompHolds','rhythm']){
+   if(!Array.isArray(raw[t])||raw[t].length>15000)throw Error('음 데이터가 너무 크거나 잘못되었어요.');
+   s[t]=[...new Set(raw[t])].filter(k=>{if(typeof k!=='string'||!/^\d+:\d+$/.test(k))return false;const [r,c]=k.split(':').map(Number);return r<(t==='rhythm'?3:window.ComposerBoard.rowCount(s))&&c<s.bars*s.beats*s.divide});
+  }return s;
+ }
+ function authUI(){ $('boardAuth').hidden=!!user;$('boardMember').hidden=!user;$('boardComposer').hidden=!user;$('boardUser').textContent=user?'로그인됨 · '+user.email:'';if(!user)$('boardCards').replaceChildren(); }
+ async function requireUser(){if(!db)throw Error('먼저 작품마당을 연결해 주세요.');if(!user)throw Error('로그인한 뒤 이용해 주세요.');}
+ async function getWork(id){await requireUser();const w=check(await db.from('music_works').select('*').eq('id',id).single());w.score=safeScore(w.score);return w;}
+ function card(w){
+  const c=node('article','', 'work-card');c.append(node('h3',w.title),node('p',w.nickname+' · '+new Date(w.created_at).toLocaleDateString('ko-KR'),'hint'),node('p',w.description));
+  if(w.source_id)c.append(action('원작 보기',()=>openWork(w.source_id)));
+  const controls=node('div','','work-controls');
+  controls.append(action('▶ 듣기',async()=>{const full=await getWork(w.id);await window.ComposerBoard.preview(full.score);status(w.title+' 감상 중 · 작곡 중인 내용은 그대로예요.')}),action('■',()=>window.ComposerBoard.stop()));
+  controls.append(action((w.liked?'♥':'♡')+' '+(w.likes||0),async()=>{await requireUser();if(w.liked)check(await db.from('music_likes').delete().eq('work_id',w.id).eq('user_id',user.id));else{const r=await db.from('music_likes').insert({work_id:w.id});if(r.error?.code!=='23505')check(r)}await refresh()}));
+  controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 로그인이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
+  controls.append(action('사본으로 편집 · '+(w.remixes||0),async()=>{
+   const full=await getWork(w.id);
+   if(!confirm('현재 작업을 임시저장하고 이 작품의 사본을 불러올까요? 원본은 바뀌지 않아요.'))return;
+   const r=await db.from('music_remixes').insert({work_id:w.id});if(r.error?.code!=='23505')check(r);
+   window.ComposerBoard.import(full.score);sourceId=w.id;$('boardSource').textContent='원작: '+w.title+' · '+w.nickname;$('boardTitle').value=w.title+' (이어 만들기)';
+   $('boardPanel').hidden=true;status('사본을 불러왔어요.');await refresh();
+  }));
+  if(w.owner_id===user?.id)controls.append(action('삭제',async()=>{if(!confirm('게시한 작품을 삭제할까요?'))return;check(await db.from('music_works').delete().eq('id',w.id).eq('owner_id',user.id));openedId=null;await refresh()}));
+  c.append(controls);return c;
+ }
+ async function refresh(){
+  if(!user)return;const ticket=++request;status('작품을 불러오는 중…');
+  const data=check(await db.rpc('music_gallery',{sort_by:$('boardSort').value,page_number:page,only_mine:$('boardMine').checked}));if(ticket!==request)return;
+  $('boardCards').replaceChildren(...data.map(card));$('boardPage').textContent=(page+1)+'쪽';$('boardPrev').disabled=page===0;$('boardNext').disabled=data.length<12;
+  status(data.length?'작품을 골라 들어 보세요.':'아직 작품이 없어요. 첫 작품을 올려 보세요.');
+ }
+ async function openWork(id){const w=await getWork(id);openedId=id;$('boardPanel').hidden=false;const counts=await db.rpc('music_gallery',{sort_by:'new',page_number:0,only_mine:false,work_filter:id});const entry=check(counts)?.find(x=>x.id===id)||w;$('boardCards').replaceChildren(card({...w,...entry}));status('공유받은 작품 · 전체 목록은 새로고침을 누르세요.');}
+ async function connect(){
+  if(!cfg.url||!cfg.key){$('boardSetup').hidden=false;status('작품마당 연결 준비 중이에요. 작곡과 파일 저장은 지금도 사용할 수 있어요.');return;}
+  if(db)return;
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(cfg.url))throw Error('Supabase 프로젝트 URL을 확인해 주세요.');
+  if(cfg.key.startsWith('sb_secret_')||(()=>{try{return JSON.parse(atob(cfg.key.split('.')[1])).role==='service_role'}catch{return false}})())throw Error('서버 비밀 키는 사용할 수 없어요. Publishable key를 넣어 주세요.');
+  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0/+esm');
+  db=createClient(cfg.url,cfg.key);user=check(await db.auth.getSession()).session?.user||null;authUI();
+  db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();if(!user){request++;window.ComposerBoard.stop();status('로그인하면 작품마당을 볼 수 있어요.')}});
+  if(user)await refresh();else status('로그인하면 작품을 올리고 친구 작품을 볼 수 있어요.');
+ }
+ $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;try{await connect();if(user)await refresh()}catch(e){err(e)}};
+ $('boardClose').onclick=()=>{$('boardPanel').hidden=true;window.ComposerBoard.stop()};
+ $('boardLogin').onclick=async()=>{try{await connect();if(!db)return;check(await db.auth.signInWithPassword({email:$('boardEmail').value.trim(),password:$('boardPassword').value}));user=check(await db.auth.getUser()).user;$('boardPassword').value='';authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}catch(e){err(e)}};
+ $('boardSignup').onclick=async()=>{try{await connect();if(!db)return;const password=$('boardPassword').value;if(password.length<8)throw Error('비밀번호는 8자 이상으로 정해 주세요.');check(await db.auth.signUp({email:$('boardEmail').value.trim(),password,options:{emailRedirectTo:location.origin+location.pathname}}));$('boardPassword').value='';status('이메일의 확인 링크를 누른 뒤 로그인해 주세요. 기존 계정이면 로그인을 이용하세요.')}catch(e){err(e)}};
+ $('boardLogout').onclick=async()=>{try{check(await db.auth.signOut());user=null;sourceId=null;$('boardSource').textContent='';authUI()}catch(e){err(e)}};
+ $('boardPublish').onclick=async()=>{
+  if(busy)return;busy=true;$('boardPublish').disabled=true;
+  try{await requireUser();const title=$('boardTitle').value.trim(),nickname=$('boardNick').value.trim(),description=$('boardDescription').value.trim();if(!title||!nickname)throw Error('작품 제목과 별명을 적어 주세요.');
+   if(!$('boardConsent').checked)throw Error('회원 공개 및 사본 편집 허용에 체크해 주세요.');
+   const score=safeScore(window.ComposerBoard.get());if(!score.notes.length&&!score.accomp.length&&!score.harmony.length&&!score.rhythm.length)throw Error('먼저 음이나 리듬을 찍어 주세요.');
+   if(new TextEncoder().encode(JSON.stringify(score)).length>280000)throw Error('작품 데이터가 너무 커요. 음 수를 줄여 주세요.');
+   check(await db.from('music_works').insert({title,nickname,description,score,source_id:sourceId}));page=0;await refresh();status('작품을 올렸어요. WAV 음원은 업로드하지 않았어요.');
+  }catch(e){err(e)}finally{busy=false;$('boardPublish').disabled=false}
+ };
+ $('boardRefresh').onclick=()=>{openedId=null;refresh().catch(err)};
+ $('boardSort').onchange=$('boardMine').onchange=()=>{page=0;refresh().catch(err)};
+ $('boardPrev').onclick=()=>{page=Math.max(0,page-1);refresh().catch(err)};$('boardNext').onclick=()=>{page++;refresh().catch(err)};
+ $('downloadSQL').onclick=()=>{const b=new Blob([$('setupSQL').textContent],{type:'text/plain;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='supabase-setup.sql';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+ const linked=new URLSearchParams(location.search).get('work');if(linked){$('boardPanel').hidden=false;connect().then(()=>user?openWork(linked):null).catch(err)}
+ window.GalleryValidation={safeScore};
+})();
+
+</script>
+</body>
+</html>
