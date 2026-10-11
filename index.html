@@ -525,6 +525,16 @@
       if(next>=0)wrap.querySelectorAll(`[data-col="${next}"]`).forEach(e=>e.classList.add('playing'));
     }
     playColumn=next;
+    if(next>=0&&playing)followPlayhead(next);
+  }
+  // 재생 위치가 화면 오른쪽 끝(또는 왼쪽 밖)에 닿으면 악보를 옆으로 넘겨 줌
+  function followPlayhead(col){
+    const box=$('grid').parentElement,cell=$('grid').querySelector(`.step[data-col="${col}"]`);if(!box||!cell)return;
+    const view=box.getBoundingClientRect(),c=cell.getBoundingClientRect(),x=c.left-view.left+box.scrollLeft,margin=Math.min(160,box.clientWidth*.2);
+    if(x+c.width>box.scrollLeft+box.clientWidth-margin||x<box.scrollLeft+margin){
+      const left=Math.max(0,x-box.clientWidth*.25);
+      try{box.scrollTo({left,behavior:'smooth'})}catch(e){box.scrollLeft=left}
+    }
   }
   let renderedOctaves=Number(octSel.value),renderedKey=keySel.value;
   function render(){
