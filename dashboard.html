@@ -119,7 +119,7 @@ code{ font-size:12px; color:var(--grape); }
 
   <div class="card">
     <h2>오늘 한눈에 <button id="refresh-today">새로고침</button></h2>
-    <p class="help">한국 시간 기준 오늘이에요. '입장한 학생'은 작품마당에 닉네임으로 들어온 학생만 세요. '활동한 분'은 클릭·키 입력이 있었던 1분 단위를 더한 값이에요.</p>
+    <p class="help">한국 시간 기준 오늘이에요. '입장한 학생'은 사이트를 연 학생 수예요 — 공용 컴퓨터 한 대는 1명으로 세되, 같은 컴퓨터라도 작품마당 닉네임이 다르면 다른 학생으로 세요. '활동한 분'은 클릭·키 입력이 있었던 1분 단위를 더한 값이에요.</p>
     <div class="summary-row" id="today-stats"></div>
   </div>
 
@@ -137,7 +137,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="refresh-recent">새로고침</button>
       </span>
     </h2>
-    <p class="help">30초마다 자동으로 새로고침돼요. 위쪽일수록 지금 쓰고 있을 가능성이 높아요. 접속 코드는 페이지를 열 때마다 새로 생겨요.</p>
+    <p class="help">30초마다 자동으로 새로고침돼요. 위쪽일수록 지금 쓰고 있을 가능성이 높아요. 접속 코드는 페이지를 열 때마다 새로 생기고, 학생 코드는 같은 컴퓨터(닉네임으로 입장했으면 그 닉네임)면 늘 같아요.</p>
     <div class="body" id="recent-body"></div>
   </div>
 
@@ -148,7 +148,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="refresh-retention">새로고침</button>
       </span>
     </h2>
-    <p class="help">학생 수는 작품마당에 입장한 학생 기준이에요. 접속 수는 입장 여부와 상관없이 페이지를 연 횟수예요.</p>
+    <p class="help">학생 수는 사이트를 연 학생 기준이에요(컴퓨터 1대 = 1명, 닉네임이 다르면 따로). 접속 수는 페이지를 연 횟수라 같은 학생이 새로고침하면 늘어나요.</p>
     <div class="summary-row" id="retention-today" style="margin-bottom:12px;"></div>
     <div class="summary-row" id="retention-total"></div>
   </div>
@@ -160,7 +160,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="load-students">불러오기</button>
       </span>
     </h2>
-    <p class="help">활동한 시간이 긴 순서예요. 같은 학생은 언제나 같은 코드로 나와서 날짜가 지나도 추적할 수 있어요.</p>
+    <p class="help">컴퓨터 1대 = 1명, 작품마당 닉네임이 다르면 따로 세요. 활동한 시간이 긴 순서이고, 같은 학생은 언제나 같은 코드로 나와요.</p>
     <div class="body" id="students-body"><span class="muted">불러오기를 눌러주세요.</span></div>
   </div>
 
@@ -337,7 +337,7 @@ async function loadRecent(){
     if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에는 접속 기록이 없어요.</span>`; return; }
     el.innerHTML = `<table><tr><th>접속 코드</th><th>학생</th><th>시작</th><th>마지막 활동</th><th>재생</th><th>활동(분)</th><th>기능 사용</th></tr>
       ${rows.map(r => `<tr><td><code>${esc(r.session_code)}</code></td>
-        <td>${r.student_code ? `<code>${esc(r.student_code)}</code>` : `<span class="muted">비입장</span>`}</td>
+        <td><code>${esc(r.student_code)}</code></td>
         <td>${kst(r.first_kst)}</td><td>${kst(r.last_kst)}</td><td>${fmt(r.plays)}</td><td>${fmt(r.minutes)}</td><td>${fmt(r.actions)}</td></tr>`).join("")}</table>`;
   } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
 }
@@ -348,7 +348,7 @@ async function loadRetention(){
   try {
     const r = (await rpc("get_music_dash_retention", { p_min_days: n }))[0] || {};
     $("retention-today").innerHTML = stat(fmt(r.today_new), "오늘 처음 온 학생") + stat(fmt(r.today_students), "오늘 입장한 학생") + stat(fmt(r.today_sessions), "오늘 접속 수");
-    $("retention-total").innerHTML = stat(fmt(r.total_students), "누적 학생") + stat(fmt(r.active_students), `${n}일+ 접속 학생`) + stat(fmt(r.total_sessions), "누적 접속 수");
+    $("retention-total").innerHTML = stat(fmt(r.total_students), "누적 학생(브라우저)") + stat(fmt(r.active_students), `${n}일+ 접속 학생`) + stat(fmt(r.total_sessions), "누적 접속 수");
   } catch(e){ $("retention-today").innerHTML = fail(e, NEED_SQL); $("retention-total").innerHTML = ""; }
 }
 
@@ -357,7 +357,7 @@ async function loadStudents(){
   const el = $("students-body"); el.innerHTML = "불러오는 중...";
   try {
     const rows = await rpc("get_music_dash_students", { p_days: Number($("students-days").value), p_limit: 30 });
-    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 입장한 학생 기록이 없어요.</span>`; return; }
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 사이트를 연 학생 기록이 없어요.</span>`; return; }
     const max = Math.max(1, ...rows.map(r => Number(r.minutes) || 0));
     el.innerHTML = `<table><tr><th>학생 코드</th><th>접속일</th><th style="width:30%;">활동(분)</th><th>재생</th><th>작품 올림</th><th>마지막 활동</th></tr>
       ${rows.map(r => `<tr><td><code>${esc(r.student_code)}</code></td><td>${fmt(r.days)}일</td>

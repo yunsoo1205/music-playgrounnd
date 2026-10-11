@@ -29,7 +29,8 @@
       padding:24px;
     }
     h1{margin:0 0 8px;font-size:26px;letter-spacing:-.04em}
-    .subheading{color:#7c828d;margin:0 0 26px;font-size:14px}
+    .subheading{color:#7c828d;margin:0 0 6px;font-size:14px}
+    .privacy-note{color:#8a919b;margin:0 0 22px;font-size:12px;line-height:1.5}
     .controls,.actions{
       display:flex;
       flex-wrap:wrap;
@@ -91,6 +92,11 @@
     .compose-tools select,.compose-tools input{margin-top:6px}
     .compose-tools input[type="number"]{width:72px}
     #lockAccomp[aria-pressed="true"]{background:#f3f4f6;border-color:#aab0ba}
+    .start-bar{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700}
+    .start-bar input{width:64px;height:40px;margin:0;text-align:center;padding:6px}
+    .measure-number{cursor:pointer;border-radius:6px}
+    .measure-number:hover{background:#f3f4f6}
+    .measure-number.start-mark{color:#b45309!important;background:#fef3c7}
     #repeatAll[aria-pressed="true"]{background:#e9eef4;border-color:#8d9cad;font-weight:700}
     #loop[aria-pressed="true"]{background:#e9eef4;border-color:#8d9cad}
     .help-note{font-size:13px;color:#68707b;line-height:1.5;margin:4px 0 0}
@@ -228,6 +234,7 @@
 <div class="wrap">
   <h1>음악놀이터</h1>
   <p class="subheading">음을 찍고, 반주를 넣고, 바로 들어 보세요.</p>
+  <p class="privacy-note">🔒 수업 개선을 위해 브라우저에 무작위 번호(쿠키)를 저장하고 재생·저장 같은 사용 기록을 모아요. 이름·이메일·연락처는 모으지 않아요.</p>
 
   <button id="drawerToggle" class="drawer-toggle" type="button" aria-controls="toolDrawer" aria-expanded="false">☰ 다양한 기능</button>
   <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
@@ -235,6 +242,7 @@
   <div class="actions main-actions">
     <button id="play" class="primary">▶ 재생</button>
     <button id="repeatAll" type="button" aria-pressed="false" title="켜면 정지를 누를 때까지 곡을 계속 반복해요">🔁 반복재생: 꺼짐</button>
+    <label class="start-bar" title="악보 위쪽 마디 번호를 눌러도 정할 수 있어요">시작 마디 <input id="startBar" type="number" min="1" value="1" inputmode="numeric" aria-label="재생을 시작할 마디"></label>
     <button id="stop">■ 정지</button>
     <button id="undo" type="button" title="Ctrl/Cmd+Z" disabled>↶ 실행 취소</button>
     <button id="redo" type="button" title="Ctrl/Cmd+Shift+Z" disabled>↷ 다시 실행</button>
@@ -412,7 +420,7 @@
 <p id="boardStatus" role="status" aria-live="polite">연결을 준비하고 있어요.</p>
 <input id="boardLink" hidden readonly aria-label="공유할 작품 링크">
 <div id="boardAuth" class="board-box"><strong>작품마당 입장</strong><p class="hint">이메일 없이 닉네임과 비밀번호로 들어와요. 처음이면 「처음이에요 · 새로 만들기」, 다음부터는 같은 닉네임과 비밀번호로 「입장하기」를 누르세요. 작품은 작품마당에 들어온 모두에게 공개돼요.</p>
-<p class="board-warning" role="note"><strong>⚠ 꼭 기억하세요!</strong> 닉네임이나 비밀번호를 잊어버리면 <b>다시 찾을 방법이 없어요.</b> 선생님도 찾아줄 수 없고, 그 닉네임으로 올린 작품도 다시 관리할 수 없어요. 공책이나 알림장에 꼭 적어 두세요.<br><b>🔒 비밀번호는 다른 사이트에서 쓰지 않는 비밀번호를 사용해주세요.</b></p>
+<p class="board-warning" role="note"><strong>⚠ 꼭 기억하세요!</strong> 닉네임이나 비밀번호를 잊어버리면 <b>다시 찾을 방법이 없어요.</b> 선생님도 찾아줄 수 없고, 그 닉네임으로 올린 작품도 다시 관리할 수 없어요. 공책이나 알림장에 꼭 적어 두세요.<br><b>닉네임에는 실명을 쓰지 마세요.</b> 별명이면 충분해요.<br><b>🔒 비밀번호는 다른 사이트에서 쓰지 않는 비밀번호를 사용해주세요.</b></p>
 <div class="board-fields"><label>닉네임 <span class="hint">(한글·영문·숫자·_ 2~10자)</span><input id="boardNickLogin" maxlength="10" autocomplete="username" autocapitalize="off" spellcheck="false"></label><label>비밀번호 <span class="hint">(6자 이상)</span><input id="boardPassword" type="password" minlength="6" autocomplete="current-password"></label></div>
 <button id="boardLogin" class="primary">입장하기</button> <button id="boardSignup">처음이에요 · 새로 만들기</button>
 <p id="boardAuthMsg" class="board-auth-msg" role="alert" aria-live="assertive"></p>
@@ -535,6 +543,10 @@
       try{box.scrollTo({left,behavior:'smooth'})}catch(e){box.scrollLeft=left}
     }
   }
+  function startBar(){const max=Number(barsSel.value),v=Math.max(1,Math.min(max,Math.round(Number($('startBar').value))||1));$('startBar').max=String(max);if(String(v)!==$('startBar').value)$('startBar').value=String(v);return v}
+  function setStartBar(bar,announce=true){$('startBar').value=String(bar);const v=startBar();
+    $('grid').querySelectorAll('.measure-number').forEach(e=>e.classList.toggle('start-mark',Number(e.dataset.bar)===v));
+    if(announce)$('editStatus').textContent=`▶ 재생은 ${v}마디부터 시작해요.${looping?' (선택 마디 반복이 켜져 있으면 그 구간이 먼저예요)':''}`;}
   let renderedOctaves=Number(octSel.value),renderedKey=keySel.value,colCells=[],gridGeom={label:72,width:34,gap:2};
   function render(){
     renderedOctaves=Number(octSel.value);renderedKey=keySel.value;syncChromatics();
@@ -545,7 +557,7 @@
       const k=c%d,beat=Math.floor(c/d)%Number(beatsSel.value),bar=Math.floor(c/perBar)+1;
       const h=cell(k===0?(beat===0?String(bar):String(beat+1)):(d===2?'&':['','e','&','a'][k]),'hint');
       h.style.cssText=k===0&&beat===0?'font-size:19px;font-weight:800;color:#374151;text-align:center;margin:0;line-height:28px':'font-size:10px;text-align:center;margin:0';
-      if(k===0&&beat===0){h.className='measure-number';h.setAttribute('aria-label',bar+'마디');h.title=bar+'마디'}
+      if(k===0&&beat===0){h.className='measure-number'+(bar===startBar()?' start-mark':'');h.dataset.bar=String(bar);h.setAttribute('role','button');h.tabIndex=0;h.setAttribute('aria-label',bar+'마디부터 재생하도록 정하기');h.title=bar+'마디부터 재생';h.onclick=()=>{stop();setStartBar(bar)};h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();stop();setStartBar(bar)}}}
       wrap.appendChild(h);
     }
     function row(title,color,rowIndex,isDrum=false){
@@ -678,7 +690,7 @@
     for(const event of score.events){if(event.track==='rhythm')scheduleDrum(a,event.drum,start+event.time,buses.rhythm,remember);else scheduleTone(a,buffers.get(event.midi),event.midi,start+event.time,event.duration,buses[event.track],instrument,remember)}
   }
   async function play(){
-    stop();const id=playId,a=ensureBuses();syncLoop();const s=state(),perBar=s.beats*s.divide,first=looping?(Number($('loopStart').value)-1)*perBar:0,last=looping?Number($('loopEnd').value)*perBar:count(),score=scoreEvents(s,first,last);
+    stop();const id=playId,a=ensureBuses();syncLoop();const s=state(),perBar=s.beats*s.divide,first=looping?(Number($('loopStart').value)-1)*perBar:(startBar()-1)*perBar,last=looping?Number($('loopEnd').value)*perBar:count(),score=scoreEvents(s,first,last);
     $('audioStatus').textContent='악기 음원을 불러오는 중…';const buffers=await prepareSounds(s,score.events);if(id!==playId)return;
     $('audioStatus').textContent=[...buffers.values()].some(Boolean)?'실제 악기 음원 준비 완료':'대체 음색으로 재생';playing=true;syncMixer();window.MusicLog?.('play',{bars:s.bars,tempo:s.tempo,notes:s.notes.length+s.harmony.length+s.accomp.length,repeat:!!(repeatAll||looping)});
     function cycle(){
@@ -860,6 +872,7 @@
     previousDivide=newD;render();
   }
   let previousDivide=divide();
+  $('startBar').onchange=()=>{stop();setStartBar(startBar())};
   $('play').onclick=play;$('stop').onclick=stop;
   $('clear').onclick=()=>{if(locked&&accomp.size){if(!confirm('잠긴 반주를 남기고 멜로디·화음·리듬을 지울까요?'))return;notes.clear();holds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear()}
     else{notes.clear();accomp.clear();holds.clear();accompHolds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear()}stop();render()};
@@ -1228,6 +1241,9 @@ commit;
  const status=t=>{$('boardStatus').textContent=t;$('boardAuthMsg').textContent=user?'':t};
  // ── 사용 기록: 활동 종류와 시각만 보냄(이메일·IP·기기정보 없음). 실패해도 앱 동작에는 영향 없음.
  const sessionId=(()=>{try{return crypto.randomUUID()}catch(e){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)})}})();
+ // 브라우저 번호: 사이트를 연 학생 수를 세기 위한 무작위 번호(이름·기기정보 없음). 이 사이트 쿠키에 1년 보관.
+ const newUuid=()=>{try{return crypto.randomUUID()}catch(e){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)})}};
+ const visitorId=(()=>{try{const m=document.cookie.match(/(?:^|; )mp_vid=([0-9a-f-]{36})(?:;|$)/);if(m)return m[1];const id=newUuid();document.cookie='mp_vid='+id+'; max-age=31536000; path=/; SameSite=Lax'+(location.protocol==='https:'?'; Secure':'');return id}catch(e){return null}})();
  const logGap={play:3000,heartbeat:50000};let logCount=0;const lastLog={};
  function accessToken(){try{const ref=new URL(cfg.url).hostname.split('.')[0],raw=sessionStorage.getItem('sb-'+ref+'-auth-token');if(!raw)return null;const s=JSON.parse(raw);return s&&s.access_token&&(!s.expires_at||s.expires_at*1000>Date.now()+5000)?s.access_token:null}catch(e){return null}}
  async function logEvent(event,details={}){
@@ -1235,7 +1251,7 @@ commit;
    if(!cfg.url||!cfg.key||logCount>=600)return;
    const now=Date.now();if(logGap[event]&&now-(lastLog[event]||0)<logGap[event])return;lastLog[event]=now;logCount++;
    const headers={apikey:cfg.key,'Content-Type':'application/json',Prefer:'return=minimal'},token=accessToken();if(token)headers.Authorization='Bearer '+token;
-   await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/music_events',{method:'POST',headers,body:JSON.stringify({session_id:sessionId,event,details}),keepalive:true});
+   await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/music_events',{method:'POST',headers,body:JSON.stringify({session_id:sessionId,visitor_id:visitorId,event,details}),keepalive:true});
   }catch(e){}
  }
  window.MusicLog=(event,details)=>{logEvent(event,details)};
