@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>음악놀이터 · 나만 보는 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#CFEBFF; --sky-deep:#A9DAFB; --butter:#FFF3C9; --cream:#FFFDF5;
+  --berry:#FF8FA8; --grape:#9B8CF0; --mint:#6FD3B8;
+  --ink:#5A4A63; --ink-soft:#8C7E95;
+  --font-display:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --font-body:'Gowun Dodum','Apple SD Gothic Neo',sans-serif;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  min-height:100dvh; padding:24px 16px 60px;
+  font-family:var(--font-body); color:var(--ink);
+  background:linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 55%, #C9EFC0 100%);
+  background-attachment:fixed;
+}
+main{ width:min(920px,100%); margin:0 auto; }
+header{
+  background:var(--butter); border:4px solid #fff; border-radius:26px;
+  padding:22px 26px; text-align:center; margin-bottom:20px;
+  box-shadow:0 6px 0 rgba(90,74,99,.12), 0 12px 28px rgba(90,74,99,.16);
+}
+header h1{ font-family:var(--font-display); font-size:26px; font-weight:400; }
+header p{ font-size:13px; color:var(--ink-soft); margin-top:6px; }
+.card{
+  background:var(--cream); border:4px solid #fff; border-radius:22px;
+  padding:20px 22px; margin-bottom:18px;
+  box-shadow:0 6px 0 rgba(90,74,99,.10), 0 10px 22px rgba(90,74,99,.14);
+}
+.card h2{
+  font-family:var(--font-display); font-size:18px; font-weight:400;
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.card .help{ font-size:12.5px; color:var(--ink-soft); margin-bottom:12px; line-height:1.6; }
+.card .body{ font-size:14px; overflow-x:auto; }
+button{
+  font-family:var(--font-body); font-size:12.5px; cursor:pointer;
+  border:2px solid var(--grape); background:#fff; color:var(--grape);
+  padding:5px 12px; border-radius:999px;
+}
+button:hover{ background:var(--grape); color:#fff; }
+select{ font-family:var(--font-body); font-size:12.5px; padding:4px 8px; border-radius:999px; border:2px solid #E6DDEC; background:#fff; color:var(--ink); }
+.tab-bar{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+.tab-btn{
+  font-family:var(--font-display); font-size:14px; padding:8px 18px;
+  border-radius:999px; border:3px solid #fff; background:#fff; color:var(--ink-soft);
+  box-shadow:0 3px 0 rgba(90,74,99,.10);
+}
+.tab-btn.active{ background:var(--grape); border-color:var(--grape); color:#fff; }
+.summary-row{ display:flex; gap:14px; flex-wrap:wrap; }
+.stat{ flex:1; min-width:120px; background:#fff; border-radius:16px; padding:14px 16px; text-align:center; }
+.stat .num{ font-family:var(--font-display); font-size:26px; color:var(--grape); }
+.stat .label{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+table{ width:100%; border-collapse:collapse; font-size:13px; }
+th, td{ text-align:left; padding:7px 8px; border-bottom:1px solid #EDE7F0; }
+th{ color:var(--ink-soft); font-weight:500; }
+tr:last-child td{ border-bottom:none; }
+.muted{ color:var(--ink-soft); font-size:12.5px; }
+.pill{ display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:var(--mint); color:#fff; }
+.pill.warn{ background:var(--berry); }
+.bar{ display:flex; align-items:center; gap:6px; }
+.bar i{ display:block; height:12px; min-width:2px; background:var(--grape); border-radius:6px; }
+code{ font-size:12px; color:var(--grape); }
+#gate{
+  position:fixed; inset:0; background:linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 55%, #C9EFC0 100%);
+  display:flex; align-items:center; justify-content:center; z-index:99; padding:20px;
+}
+#gate .box{
+  background:var(--cream); border:4px solid #fff; border-radius:26px; padding:30px;
+  text-align:center; width:min(320px,100%);
+  box-shadow:0 6px 0 rgba(90,74,99,.12), 0 12px 28px rgba(90,74,99,.16);
+}
+#gate .box .emoji{ font-size:36px; margin-bottom:8px; }
+#gate input{
+  width:100%; font-family:var(--font-body); font-size:15px; margin-top:14px;
+  padding:10px 14px; border:3px solid #E6DDEC; border-radius:999px; outline:none; text-align:center;
+}
+#gate input:focus{ border-color:var(--grape); }
+#gate button{ margin-top:12px; width:100%; padding:10px; background:var(--grape); color:#fff; border:none; }
+#gate .err{ color:var(--berry); font-size:12.5px; margin-top:8px; min-height:16px; }
+.hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <div class="emoji">🔒</div>
+    <div style="font-family:var(--font-display); font-size:17px;">음악놀이터 · 나만 보는 대시보드</div>
+    <input type="password" id="pw-input" placeholder="비밀번호" autocomplete="off" />
+    <button id="pw-submit">입장</button>
+    <div class="err" id="pw-err"></div>
+  </div>
+</div>
+
+<main id="app" class="hidden">
+  <header>
+    <h1>🎵 음악놀이터 대시보드</h1>
+    <p>선생님·학생용 페이지가 아닌, 운영자만 보는 요약 화면이에요. 학생은 닉네임 대신 코드로만 표시돼요.</p>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="main">메인</button>
+    <button class="tab-btn" data-tab="usage">기능·작품</button>
+    <button class="tab-btn" data-tab="cumulative">누적 현황</button>
+  </div>
+
+  <div class="tab-panel" data-tab="main">
+
+  <div class="card">
+    <h2>오늘 한눈에 <button id="refresh-today">새로고침</button></h2>
+    <p class="help">한국 시간 기준 오늘이에요. '입장한 학생'은 작품마당에 닉네임으로 들어온 학생만 세요. '활동한 분'은 클릭·키 입력이 있었던 1분 단위를 더한 값이에요.</p>
+    <div class="summary-row" id="today-stats"></div>
+  </div>
+
+  <div class="card">
+    <h2>📆 주간 현황 <span><select id="week-select"></select> <button id="refresh-week">새로고침</button></span></h2>
+    <p class="help">월요일~일요일 한 주 단위예요. 아래 히트맵은 고른 주의 요일×시간대별 접속 수(같은 칸에서 서로 다른 접속)예요.</p>
+    <div class="summary-row" id="week-stats"></div>
+    <div class="body" id="week-heatmap" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>최근 접속
+      <span>
+        <select id="hours-select"><option value="1">최근 1시간</option><option value="3" selected>최근 3시간</option><option value="24">최근 24시간</option></select>
+        <button id="refresh-recent">새로고침</button>
+      </span>
+    </h2>
+    <p class="help">30초마다 자동으로 새로고침돼요. 위쪽일수록 지금 쓰고 있을 가능성이 높아요. 접속 코드는 페이지를 열 때마다 새로 생겨요.</p>
+    <div class="body" id="recent-body"></div>
+  </div>
+
+  <div class="card">
+    <h2>🌱 신규 & 재방문
+      <span>
+        <select id="ret-min-days"><option value="2" selected>2일 이상 접속</option><option value="3">3일 이상 접속</option><option value="5">5일 이상 접속</option><option value="7">7일 이상 접속</option></select>
+        <button id="refresh-retention">새로고침</button>
+      </span>
+    </h2>
+    <p class="help">학생 수는 작품마당에 입장한 학생 기준이에요. 접속 수는 입장 여부와 상관없이 페이지를 연 횟수예요.</p>
+    <div class="summary-row" id="retention-today" style="margin-bottom:12px;"></div>
+    <div class="summary-row" id="retention-total"></div>
+  </div>
+
+  <div class="card">
+    <h2>🧑‍🎓 학생별 참여
+      <span>
+        <select id="students-days"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="365">전체(1년)</option></select>
+        <button id="load-students">불러오기</button>
+      </span>
+    </h2>
+    <p class="help">활동한 시간이 긴 순서예요. 같은 학생은 언제나 같은 코드로 나와서 날짜가 지나도 추적할 수 있어요.</p>
+    <div class="body" id="students-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>시간대·요일별 접속 패턴 <button id="load-heatmap">불러오기</button></h2>
+    <p class="help">최근 30일 기준. 진할수록 그 시간대에 많이 접속했어요.</p>
+    <div class="body" id="heatmap-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  </div><!-- /main -->
+
+  <div class="tab-panel hidden" data-tab="usage">
+
+  <div class="card">
+    <h2>🎛️ 기능별 사용량
+      <span>
+        <select id="features-days"><option value="7">최근 7일</option><option value="14" selected>최근 14일</option><option value="30">최근 30일</option></select>
+        <button id="load-features">불러오기</button>
+      </span>
+    </h2>
+    <p class="help">어떤 기능을 많이 쓰는지예요. '쓴 접속 수'는 그 기능을 한 번이라도 쓴 접속의 수예요. 재생은 3초 안에 여러 번 눌러도 한 번으로 세요.</p>
+    <div class="body" id="features-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>🎼 인기 예시곡
+      <span>
+        <select id="examples-days"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="365">전체(1년)</option></select>
+        <button id="load-examples">불러오기</button>
+      </span>
+    </h2>
+    <p class="help">학생들이 「예시 불러오기」로 연 예시곡 순위예요.</p>
+    <div class="body" id="examples-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>♫ 작품마당 인기 작품 <button id="load-works">불러오기</button></h2>
+    <p class="help">좋아요가 많은 순서예요. 작곡자는 코드로 표시해요. (작품마당 설정 SQL이 실행돼 있어야 나와요)</p>
+    <div class="body" id="works-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>📱 접속 기기 <button id="load-devices">불러오기</button></h2>
+    <p class="help">최근 30일, 화면 너비 기준이에요(700px 미만 = 휴대폰·작은 태블릿).</p>
+    <div class="body" id="devices-body"><span class="muted">불러오기를 눌러주세요.</span></div>
+  </div>
+
+  </div><!-- /usage -->
+
+  <div class="tab-panel hidden" data-tab="cumulative">
+  <div class="card">
+    <h2>지금까지 누적 현황 <button id="refresh-cumulative">새로고침</button></h2>
+    <p class="help">기록 수집을 시작한 이후 지금까지 전체 누적 수치예요.</p>
+    <div id="launch-clock" style="margin:6px 0 14px;"></div>
+    <div class="summary-row" id="cumulative-stats"></div>
+    <p class="muted" style="margin-top:10px;">· 시각은 한국 시간(KST) 기준이에요.</p>
+  </div>
+  </div><!-- /cumulative -->
+</main>
+
+<script>
+/* =========================================================================
+   👇 비밀번호를 원하는 걸로 꼭 바꿔서 쓰세요! (페이지 소스를 보면 알 수 있는
+   텍스트라서 진짜 보안은 아니에요. 링크를 걸어두지 않고 검색에도 안 잡히게(noindex)
+   해서 "우연히 못 찾게" 하는 정도예요. 실제로 지켜주는 건 아래 함수들이
+   학생 개인정보 없이 '집계값'과 '학생 코드'만 돌려준다는 점이에요.)
+   ========================================================================= */
+const DASH_PASSWORD = "음악놀이터2026";
+
+const SUPABASE_URL = "https://dbcydfbduservhiwiwgj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ojqIzp7fD06E50JraS4i-g_uLU8p8pS";
+
+const $ = id => document.getElementById(id);
+const fmt = n => (Number(n) || 0).toLocaleString("ko-KR");
+function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c])); }
+const kst = s => esc(String(s || "").replace("T", " ").slice(0, 16));
+const stat = (num, label) => `<div class="stat"><div class="num">${num}</div><div class="label">${label}</div></div>`;
+const fail = (e, hint) => `<span class="muted">불러오기 실패${hint ? " — " + hint : ""} (${esc(e.message).slice(0, 140)})</span>`;
+const NEED_SQL = "음악놀이터_대시보드.sql을 아직 실행하지 않았을 수 있어요";
+
+async function rpc(name, body){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body || {})
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+const EVENT_LABEL = {
+  play:"▶ 재생", example_load:"🎼 예시곡 불러오기", wav_export:"🔊 WAV 저장", file_save:"💾 파일로 저장",
+  file_load:"📂 파일 불러오기", temp_save:"▣ 임시저장", share_code:"🔗 공유 코드", board_open:"♫ 작품마당 열기",
+  login:"🚪 입장", signup:"🌱 새로 만들기", work_publish:"📤 작품 올리기", remix:"✂️ 사본 편집", like:"♥ 좋아요"
+};
+const EXAMPLE_LABEL = {
+  twinkle_melody:"작은별 · 멜로디", twinkle_accomp:"작은별 · 멜로디+코드반주", twinkle_harmony:"작은별 · 멜로디+화음", twinkle_full:"작은별 · 전체",
+  butterfly_melody:"나비야 · 멜로디", butterfly_accomp:"나비야 · 멜로디+코드반주", butterfly_harmony:"나비야 · 멜로디+화음", butterfly_full:"나비야 · 전체",
+  canon_melody:"캐논 · 멜로디", canon_accomp:"캐논 · 멜로디+코드반주", canon_harmony:"캐논 · 멜로디+화음", canon_full:"캐논 · 전체",
+  money:"머니코드 반주"
+};
+
+/* ---------- 입장 ---------- */
+function tryEnter(){
+  if ($("pw-input").value === DASH_PASSWORD){
+    try { sessionStorage.setItem("music-dash-auth", "1"); } catch(e){}
+    openApp();
+  } else $("pw-err").textContent = "비밀번호가 달라요.";
+}
+function openApp(){ $("gate").classList.add("hidden"); $("app").classList.remove("hidden"); initDashboard(); }
+$("pw-submit").addEventListener("click", tryEnter);
+$("pw-input").addEventListener("keydown", e => { if (e.key === "Enter") tryEnter(); });
+
+/* ---------- 오늘 ---------- */
+async function loadToday(){
+  const el = $("today-stats");
+  try {
+    const r = (await rpc("get_music_dash_today"))[0] || {};
+    el.innerHTML = stat(fmt(r.sessions), "오늘 접속 수") + stat(fmt(r.students), "오늘 입장한 학생") +
+      stat(fmt(r.plays), "오늘 재생 수") + stat(fmt(r.minutes), "오늘 활동한 분") + stat(fmt(r.works), "오늘 올린 작품");
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 주간 ---------- */
+function mondayOf(d){ const x = new Date(d); x.setHours(0,0,0,0); const day = x.getDay(); x.setDate(x.getDate() - (day === 0 ? 6 : day - 1)); return x; }
+function weekLabel(mon){
+  const thu = new Date(mon); thu.setDate(thu.getDate() + 3);
+  const ord = Math.floor((thu.getDate() - 1) / 7) + 1, end = new Date(mon); end.setDate(end.getDate() + 6);
+  const f = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  return `${thu.getMonth() + 1}월 ${ord}주 (${f(mon)}~${f(end)})`;
+}
+function buildWeekOptions(){
+  const thisMon = mondayOf(new Date()); let html = "";
+  for (let i = 0; i < 12; i++){
+    const mon = new Date(thisMon); mon.setDate(mon.getDate() - 7 * i);
+    html += `<option value="${mon.toISOString()}"${i === 0 ? " selected" : ""}>${i === 0 ? "이번 주 · " : i === 1 ? "지난주 · " : ""}${weekLabel(mon)}</option>`;
+  }
+  $("week-select").innerHTML = html;
+}
+function heatmapTable(rows, empty){
+  if (!rows || !rows.length) return `<span class="muted">${empty}</span>`;
+  const DOW = ["일","월","화","수","목","금","토"], grid = Array.from({ length: 24 }, () => Array(7).fill(0));
+  let max = 1;
+  rows.forEach(r => { const h = Number(r.hour), d = Number(r.dow); if (h >= 0 && h < 24 && d >= 0 && d < 7){ grid[h][d] = Number(r.sessions); max = Math.max(max, grid[h][d]); } });
+  let html = `<table><tr><th></th>${DOW.map(d => `<th>${d}</th>`).join("")}</tr>`;
+  for (let h = 0; h < 24; h++){
+    html += `<tr><td class="muted">${h}시</td>`;
+    for (let d = 0; d < 7; d++){
+      const v = grid[h][d], a = v ? Math.max(0.12, v / max) : 0;
+      html += `<td style="background:rgba(155,140,240,${a}); text-align:center; color:${a > 0.55 ? '#fff' : 'var(--ink)'};">${v || ""}</td>`;
+    }
+    html += `</tr>`;
+  }
+  return html + `</table>`;
+}
+async function loadWeekly(){
+  if (!$("week-select").options.length) buildWeekOptions();
+  const start = new Date($("week-select").value), end = new Date(start); end.setDate(end.getDate() + 7);
+  const args = { p_start: start.toISOString(), p_end: end.toISOString() };
+  try {
+    const [sum, pat] = await Promise.all([rpc("get_music_dash_range", args), rpc("get_music_dash_hourly", args)]);
+    const r = sum[0] || {};
+    $("week-stats").innerHTML = stat(fmt(r.sessions), "접속 수") + stat(fmt(r.students), "입장한 학생") +
+      stat(fmt(r.plays), "재생 수") + stat(fmt(r.minutes), "활동한 분") + stat(fmt(r.works), "올린 작품");
+    $("week-heatmap").innerHTML = heatmapTable(pat, "이 주에는 접속 기록이 없어요.");
+  } catch(e){ $("week-stats").innerHTML = fail(e, NEED_SQL); $("week-heatmap").innerHTML = ""; }
+}
+
+/* ---------- 최근 접속 ---------- */
+async function loadRecent(){
+  const el = $("recent-body");
+  try {
+    const rows = await rpc("get_music_dash_recent", { p_hours: Number($("hours-select").value) });
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에는 접속 기록이 없어요.</span>`; return; }
+    el.innerHTML = `<table><tr><th>접속 코드</th><th>학생</th><th>시작</th><th>마지막 활동</th><th>재생</th><th>활동(분)</th><th>기능 사용</th></tr>
+      ${rows.map(r => `<tr><td><code>${esc(r.session_code)}</code></td>
+        <td>${r.student_code ? `<code>${esc(r.student_code)}</code>` : `<span class="muted">비입장</span>`}</td>
+        <td>${kst(r.first_kst)}</td><td>${kst(r.last_kst)}</td><td>${fmt(r.plays)}</td><td>${fmt(r.minutes)}</td><td>${fmt(r.actions)}</td></tr>`).join("")}</table>`;
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 신규 & 재방문 ---------- */
+async function loadRetention(){
+  const n = Number($("ret-min-days").value) || 2;
+  try {
+    const r = (await rpc("get_music_dash_retention", { p_min_days: n }))[0] || {};
+    $("retention-today").innerHTML = stat(fmt(r.today_new), "오늘 처음 온 학생") + stat(fmt(r.today_students), "오늘 입장한 학생") + stat(fmt(r.today_sessions), "오늘 접속 수");
+    $("retention-total").innerHTML = stat(fmt(r.total_students), "누적 학생") + stat(fmt(r.active_students), `${n}일+ 접속 학생`) + stat(fmt(r.total_sessions), "누적 접속 수");
+  } catch(e){ $("retention-today").innerHTML = fail(e, NEED_SQL); $("retention-total").innerHTML = ""; }
+}
+
+/* ---------- 학생별 ---------- */
+async function loadStudents(){
+  const el = $("students-body"); el.innerHTML = "불러오는 중...";
+  try {
+    const rows = await rpc("get_music_dash_students", { p_days: Number($("students-days").value), p_limit: 30 });
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 입장한 학생 기록이 없어요.</span>`; return; }
+    const max = Math.max(1, ...rows.map(r => Number(r.minutes) || 0));
+    el.innerHTML = `<table><tr><th>학생 코드</th><th>접속일</th><th style="width:30%;">활동(분)</th><th>재생</th><th>작품 올림</th><th>마지막 활동</th></tr>
+      ${rows.map(r => `<tr><td><code>${esc(r.student_code)}</code></td><td>${fmt(r.days)}일</td>
+        <td><div class="bar"><i style="width:${Math.round(100 * (Number(r.minutes) || 0) / max)}%"></i><span>${fmt(r.minutes)}</span></div></td>
+        <td>${fmt(r.plays)}</td><td>${fmt(r.publishes)}</td><td>${kst(r.last_kst)}</td></tr>`).join("")}</table>`;
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 30일 패턴 ---------- */
+async function loadHeatmap(){
+  const el = $("heatmap-body"); el.innerHTML = "불러오는 중...";
+  const end = new Date(), start = new Date(end.getTime() - 30 * 864e5);
+  try { el.innerHTML = heatmapTable(await rpc("get_music_dash_hourly", { p_start: start.toISOString(), p_end: end.toISOString() }), "최근 30일 데이터가 없어요."); }
+  catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 기능별 ---------- */
+async function loadFeatures(){
+  const el = $("features-body"); el.innerHTML = "불러오는 중...";
+  try {
+    const rows = await rpc("get_music_dash_features", { p_days: Number($("features-days").value) });
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 기능 사용 기록이 없어요.</span>`; return; }
+    const max = Math.max(1, ...rows.map(r => Number(r.uses) || 0));
+    el.innerHTML = `<table><tr><th>기능</th><th style="width:45%;">사용 횟수</th><th>쓴 접속 수</th></tr>
+      ${rows.map(r => `<tr><td>${esc(EVENT_LABEL[r.event] || r.event)}</td>
+        <td><div class="bar"><i style="width:${Math.round(100 * (Number(r.uses) || 0) / max)}%"></i><span>${fmt(r.uses)}</span></div></td>
+        <td>${fmt(r.sessions)}</td></tr>`).join("")}</table>`;
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 예시곡 ---------- */
+async function loadExamples(){
+  const el = $("examples-body"); el.innerHTML = "불러오는 중...";
+  try {
+    const rows = await rpc("get_music_dash_examples", { p_days: Number($("examples-days").value) });
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 예시곡을 불러온 기록이 없어요.</span>`; return; }
+    const max = Math.max(1, ...rows.map(r => Number(r.uses) || 0));
+    el.innerHTML = `<table><tr><th>순위</th><th>예시곡</th><th style="width:45%;">불러온 횟수</th></tr>
+      ${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(EXAMPLE_LABEL[r.example_id] || r.example_id)}</td>
+        <td><div class="bar"><i style="width:${Math.round(100 * (Number(r.uses) || 0) / max)}%"></i><span>${fmt(r.uses)}</span></div></td></tr>`).join("")}</table>`;
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 작품 ---------- */
+async function loadWorks(){
+  const el = $("works-body"); el.innerHTML = "불러오는 중...";
+  try {
+    const rows = await rpc("get_music_dash_works", { p_limit: 15 });
+    if (!rows.length){ el.innerHTML = `<span class="muted">아직 올라온 작품이 없어요.</span>`; return; }
+    el.innerHTML = `<table><tr><th>순위</th><th>제목</th><th>작곡자</th><th>좋아요</th><th>가져간 수</th><th>올린 날</th></tr>
+      ${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.title)}${r.is_remix ? ' <span class="pill">이어 만들기</span>' : ""}</td>
+        <td><code>${esc(r.author_code)}</code></td><td>${fmt(r.likes)}</td><td>${fmt(r.remixes)}</td><td>${kst(r.created_kst).slice(0, 10)}</td></tr>`).join("")}</table>`;
+  } catch(e){ el.innerHTML = fail(e, "작품마당 설정 SQL과 " + NEED_SQL); }
+}
+
+/* ---------- 기기 ---------- */
+async function loadDevices(){
+  const el = $("devices-body"); el.innerHTML = "불러오는 중...";
+  try {
+    const rows = await rpc("get_music_dash_devices", { p_days: 30 });
+    if (!rows.length){ el.innerHTML = `<span class="muted">최근 30일 접속 기록이 없어요.</span>`; return; }
+    const total = rows.reduce((a, r) => a + (Number(r.sessions) || 0), 0) || 1;
+    const NAME = { desktop:"💻 컴퓨터·큰 태블릿", mobile:"📱 휴대폰·작은 태블릿", unknown:"알 수 없음" };
+    el.innerHTML = `<div class="summary-row">${rows.map(r => stat(Math.round(100 * Number(r.sessions) / total) + "%", `${NAME[r.screen] || esc(r.screen)} · ${fmt(r.sessions)}회`)).join("")}</div>`;
+  } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 누적 + 경과 시계 ---------- */
+let clockTimer = null;
+function startClock(since){
+  const el = $("launch-clock"); if (!el || !since || isNaN(since)) { if (el) el.innerHTML = ""; return; }
+  if (clockTimer) clearInterval(clockTimer);
+  const o = { timeZone:"Asia/Seoul", year:"numeric", month:"long", day:"numeric", weekday:"short", hour:"numeric", minute:"2-digit" };
+  const tick = () => {
+    const now = new Date(), tot = Math.max(0, Math.floor((now - since) / 60000));
+    el.innerHTML = `<div class="summary-row">
+      ${stat(`<span style="font-size:15px;">${since.toLocaleString("ko-KR", o)}</span>`, "🚀 첫 기록")}
+      ${stat(`<span style="font-size:18px;">${Math.floor(tot / 1440)}일 ${Math.floor(tot % 1440 / 60)}시간 ${tot % 60}분</span>`, "⏱️ 기록 시작 후 경과")}</div>`;
+  };
+  tick(); clockTimer = setInterval(tick, 1000);
+}
+async function loadCumulative(){
+  try {
+    const r = (await rpc("get_music_dash_cumulative"))[0] || {};
+    $("cumulative-stats").innerHTML = stat(fmt(r.sessions), "누적 접속 수") + stat(fmt(r.students), "누적 학생 수") +
+      stat(fmt(r.plays), "누적 재생 수") + stat(fmt(Math.round((Number(r.minutes) || 0) / 60)), "누적 활동(시간)") + stat(fmt(r.publishes), "누적 작품 올리기");
+    startClock(r.first_kst ? new Date(String(r.first_kst).replace(" ", "T").slice(0, 19) + "+09:00") : null);
+  } catch(e){ $("cumulative-stats").innerHTML = fail(e, NEED_SQL); }
+}
+
+/* ---------- 탭·초기화 ---------- */
+function switchTab(tab){
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("hidden", p.dataset.tab !== tab));
+}
+let started = false;
+function initDashboard(){
+  if (started) return; started = true;
+  buildWeekOptions();
+  loadToday(); loadWeekly(); loadRecent(); loadRetention(); loadCumulative();
+  document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+  const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
+  const reloadIfLoaded = (bodyId, fn) => () => { if (!$(bodyId).innerHTML.includes("불러오기를 눌러주세요")) fn(); };
+  on("refresh-today", "click", loadToday);
+  on("refresh-week", "click", loadWeekly);      on("week-select", "change", loadWeekly);
+  on("refresh-recent", "click", loadRecent);    on("hours-select", "change", loadRecent);
+  on("refresh-retention", "click", loadRetention); on("ret-min-days", "change", loadRetention);
+  on("load-students", "click", loadStudents);   on("students-days", "change", reloadIfLoaded("students-body", loadStudents));
+  on("load-heatmap", "click", loadHeatmap);
+  on("load-features", "click", loadFeatures);   on("features-days", "change", reloadIfLoaded("features-body", loadFeatures));
+  on("load-examples", "click", loadExamples);   on("examples-days", "change", reloadIfLoaded("examples-body", loadExamples));
+  on("load-works", "click", loadWorks);
+  on("load-devices", "click", loadDevices);
+  on("refresh-cumulative", "click", loadCumulative);
+  setInterval(loadToday, 60000);
+  setInterval(loadRecent, 30000);
+}
+try { if (sessionStorage.getItem("music-dash-auth") === "1") openApp(); } catch(e){}
+</script>
+</body>
+</html>

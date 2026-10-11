@@ -680,7 +680,7 @@
   async function play(){
     stop();const id=playId,a=ensureBuses();syncLoop();const s=state(),perBar=s.beats*s.divide,first=looping?(Number($('loopStart').value)-1)*perBar:0,last=looping?Number($('loopEnd').value)*perBar:count(),score=scoreEvents(s,first,last);
     $('audioStatus').textContent='악기 음원을 불러오는 중…';const buffers=await prepareSounds(s,score.events);if(id!==playId)return;
-    $('audioStatus').textContent=[...buffers.values()].some(Boolean)?'실제 악기 음원 준비 완료':'대체 음색으로 재생';playing=true;syncMixer();
+    $('audioStatus').textContent=[...buffers.values()].some(Boolean)?'실제 악기 음원 준비 완료':'대체 음색으로 재생';playing=true;syncMixer();window.MusicLog?.('play',{bars:s.bars,tempo:s.tempo,notes:s.notes.length+s.harmony.length+s.accomp.length,repeat:!!(repeatAll||looping)});
     function cycle(){
       if(!playing||id!==playId)return;const start=a.currentTime+.025;scheduleScore(a,score,buffers,start,liveBuses,s.instrument,true);
       for(let c=first;c<last;c++)timers.push(setTimeout(()=>{if(playing&&id===playId)refreshPlayhead(c)},25+(c-first)*60000/s.tempo/s.divide));
@@ -706,6 +706,7 @@
       audio();const buffers=await prepareSounds(s,score.events),offline=new Offline(2,Math.ceil((score.seconds+.7)*44100),44100),buses=outputBuses(offline,s.mix,s.muted);
       scheduleScore(offline,score,buffers,0,buses,s.instrument,false);$('exportStatus').textContent='WAV 파일을 만들고 있습니다…';
       const result=await offline.startRendering(),url=URL.createObjectURL(new Blob([wavBytes(result)],{type:'audio/wav'})),link=document.createElement('a');link.href=url;link.download='나의작곡.wav';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      window.MusicLog?.('wav_export',{seconds:Math.round(score.seconds)});
       $('exportStatus').textContent=`WAV 파일을 저장했습니다. 약 ${Math.round(score.seconds)}초 · 현재 파트별 음량과 음소거를 반영했습니다.${[...buffers.values()].some(b=>!b)?' 일부 음은 대체 음색을 사용했습니다.':''}`;
     }catch(e){$('exportStatus').textContent='오디오 저장에 실패했습니다. 페이지를 내려받아 브라우저에서 다시 열어 주세요.';console.error(e)}finally{$('exportAudio').disabled=false}
   };
@@ -730,7 +731,7 @@
       row.append(name,restore,remove);list.appendChild(row);
     }
   }
-  $('tempSave').onclick=()=>{
+  $('tempSave').onclick=()=>{window.MusicLog?.('temp_save',{});
     const now=new Date(),clock=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     const label=`임시저장 ${++temporarySerial} · ${clock}`;
     temporaryWorks.push({label,data:state()});renderTemporaryWorks();
@@ -1016,13 +1017,13 @@
     const id=$('example').value;
     if(!id){hideExampleConfirm();return}
     try{
-      apply(exampleState(id));previousDivide=divide();hideExampleConfirm();updateExampleInfo();
+      apply(exampleState(id));previousDivide=divide();hideExampleConfirm();updateExampleInfo();window.MusicLog?.('example_load',{id});
       $('exampleInfo').textContent+=' · 악보에 불러왔습니다.';
       setDrawer(false);$('grid').scrollIntoView({block:'start'});
     }catch(e){$('exampleInfo').textContent='예시곡을 불러오지 못했습니다. 다른 예시를 선택하거나 페이지를 새로 열어 주세요.';console.error(e)}
   };
-  $('save').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(state(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='나의작곡.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
-  $('share').onclick=()=>{$('sharePanel').classList.add('show');$('shareCode').value=encode();$('shareCode').select();$('msg').textContent='공유 코드가 만들어졌습니다.'};
+  $('save').onclick=()=>{window.MusicLog?.('file_save',{});const u=URL.createObjectURL(new Blob([JSON.stringify(state(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='나의작곡.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+  $('share').onclick=()=>{window.MusicLog?.('share_code',{});$('sharePanel').classList.add('show');$('shareCode').value=encode();$('shareCode').select();$('msg').textContent='공유 코드가 만들어졌습니다.'};
   $('load').onclick=()=>{try{const bin=atob($('loadCode').value.trim()),s=JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))));apply(s);previousDivide=divide();$('msg').textContent='작품을 불러왔습니다.'}catch(e){$('msg').textContent='공유 코드를 확인해 주세요.'}};
   function commitHistory(){
     if(!historyReady||historyMoving||applying||drag||selecting)return;
@@ -1090,7 +1091,7 @@
     $('mute_'+track).onchange=()=>{muted[track]=$('mute_'+track).checked;syncMixer();commitHistory()};
   }
   for(const field of [tempo,tempoNumber,instSel]){const previous=field.onchange;field.onchange=e=>{previous?.(e);commitHistory()}}
-  $('loadFile').onchange=async()=>{const file=$('loadFile').files?.[0];if(!file)return;try{apply(JSON.parse(await file.text()));$('fileStatus').textContent='작곡 파일을 불러왔습니다. 실행 취소로 되돌릴 수 있어요.'}catch(e){$('fileStatus').textContent='작곡실에서 저장한 JSON 파일인지 확인해 주세요.'}finally{$('loadFile').value=''}};
+  $('loadFile').onchange=async()=>{const file=$('loadFile').files?.[0];if(!file)return;try{apply(JSON.parse(await file.text()));window.MusicLog?.('file_load',{});$('fileStatus').textContent='작곡 파일을 불러왔습니다. 실행 취소로 되돌릴 수 있어요.'}catch(e){$('fileStatus').textContent='작곡실에서 저장한 JSON 파일인지 확인해 주세요.'}finally{$('loadFile').value=''}};
 
   const helpSteps=[
     {target:'#chromaticControls',title:'반음을 추가해 보세요',body:'설정에서 도♯/레♭처럼 추가할 음을 체크하세요. 같은 소리를 두 이름으로 표시하며 회색 행으로 구분해요. 입력한 음이 있는 행은 지워지지 않도록 해제를 막아요.',demo:'설정 → 추가할 반음 선택 → 회색 칸에 음 찍기'},
@@ -1225,6 +1226,22 @@ commit;
  const $=id=>document.getElementById(id),cfg=window.MUSIC_BOARD_CONFIG;
  let db,user=null,page=0,request=0,sourceId=null,busy=false,openedId=null;
  const status=t=>{$('boardStatus').textContent=t;$('boardAuthMsg').textContent=user?'':t};
+ // ── 사용 기록: 활동 종류와 시각만 보냄(이메일·IP·기기정보 없음). 실패해도 앱 동작에는 영향 없음.
+ const sessionId=(()=>{try{return crypto.randomUUID()}catch(e){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)})}})();
+ const logGap={play:3000,heartbeat:50000};let logCount=0;const lastLog={};
+ function accessToken(){try{const ref=new URL(cfg.url).hostname.split('.')[0],raw=sessionStorage.getItem('sb-'+ref+'-auth-token');if(!raw)return null;const s=JSON.parse(raw);return s&&s.access_token&&(!s.expires_at||s.expires_at*1000>Date.now()+5000)?s.access_token:null}catch(e){return null}}
+ async function logEvent(event,details={}){
+  try{
+   if(!cfg.url||!cfg.key||logCount>=600)return;
+   const now=Date.now();if(logGap[event]&&now-(lastLog[event]||0)<logGap[event])return;lastLog[event]=now;logCount++;
+   const headers={apikey:cfg.key,'Content-Type':'application/json',Prefer:'return=minimal'},token=accessToken();if(token)headers.Authorization='Bearer '+token;
+   await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/music_events',{method:'POST',headers,body:JSON.stringify({session_id:sessionId,event,details}),keepalive:true});
+  }catch(e){}
+ }
+ window.MusicLog=(event,details)=>{logEvent(event,details)};
+ let lastInput=Date.now();for(const t of ['pointerdown','keydown'])document.addEventListener(t,()=>{lastInput=Date.now()},{passive:true,capture:true});
+ setInterval(()=>{if(document.visibilityState!=='visible'||Date.now()-lastInput>120000)return;let d={};try{const s=window.ComposerBoard.get();d={notes:s.notes.length+s.harmony.length+s.accomp.length,bars:s.bars}}catch(e){}logEvent('heartbeat',d)},60000);
+ logEvent('session_start',{screen:innerWidth<700?'mobile':'desktop'});
  // 닉네임 → 내부용 가짜 이메일. 메일은 발송되지 않음(Confirm email 꺼야 함).
  const NICK_DOMAIN='music-play-ground.vercel.app';
  function nickInfo(){
@@ -1266,13 +1283,13 @@ commit;
   if(w.source_id)c.append(action('원작 보기',()=>openWork(w.source_id)));
   const controls=node('div','','work-controls');
   controls.append(action('▶ 듣기',async()=>{const full=await getWork(w.id);await window.ComposerBoard.preview(full.score);status(w.title+' 감상 중 · 작곡 중인 내용은 그대로예요.')}),action('■',()=>window.ComposerBoard.stop()));
-  controls.append(action((w.liked?'♥':'♡')+' '+(w.likes||0),async()=>{await requireUser();if(w.liked)check(await db.from('music_likes').delete().eq('work_id',w.id).eq('user_id',user.id));else{const r=await db.from('music_likes').insert({work_id:w.id});if(r.error?.code!=='23505')check(r)}await refresh()}));
+  controls.append(action((w.liked?'♥':'♡')+' '+(w.likes||0),async()=>{await requireUser();if(w.liked)check(await db.from('music_likes').delete().eq('work_id',w.id).eq('user_id',user.id));else{const r=await db.from('music_likes').insert({work_id:w.id});if(r.error?.code!=='23505'){check(r);logEvent('like')}}await refresh()}));
   controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 입장이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
   controls.append(action('사본으로 편집 · '+(w.remixes||0),async()=>{
    const full=await getWork(w.id);
    if(!confirm('현재 작업을 임시저장하고 이 작품의 사본을 불러올까요? 원본은 바뀌지 않아요.'))return;
    const r=await db.from('music_remixes').insert({work_id:w.id});if(r.error?.code!=='23505')check(r);
-   window.ComposerBoard.import(full.score);sourceId=w.id;$('boardSource').textContent='원작: '+w.title+' · '+w.nickname;$('boardTitle').value=w.title+' (이어 만들기)';
+   window.ComposerBoard.import(full.score);sourceId=w.id;logEvent('remix');$('boardSource').textContent='원작: '+w.title+' · '+w.nickname;$('boardTitle').value=w.title+' (이어 만들기)';
    $('boardPanel').hidden=true;status('사본을 불러왔어요.');await refresh();
   }));
   if(w.owner_id===user?.id)controls.append(action('삭제',async()=>{if(!confirm('게시한 작품을 삭제할까요?'))return;check(await db.from('music_works').delete().eq('id',w.id).eq('owner_id',user.id));openedId=null;await refresh()}));
@@ -1296,17 +1313,17 @@ commit;
   db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.')}});
   if(user)await refresh();else status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
  }
- $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;try{await connect();if(user)await refresh()}catch(e){err(e)}};
+ $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;logEvent('board_open');try{await connect();if(user)await refresh()}catch(e){err(e)}};
  $('boardClose').onclick=()=>{$('boardPanel').hidden=true;window.ComposerBoard.stop()};
  async function afterEnter(){user=check(await db.auth.getUser()).user;$('boardPassword').value='';$('boardRemember').checked=false;authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}
- $('boardLogin').onclick=async()=>{try{status('입장하는 중…');await connect();const {email}=nickInfo();const r=await db.auth.signInWithPassword({email,password:$('boardPassword').value});if(r.error)throw authErr(r.error);await afterEnter()}catch(e){err(e)}};
+ $('boardLogin').onclick=async()=>{try{status('입장하는 중…');await connect();const {email}=nickInfo();const r=await db.auth.signInWithPassword({email,password:$('boardPassword').value});if(r.error)throw authErr(r.error);await afterEnter();logEvent('login')}catch(e){err(e)}};
  $('boardSignup').onclick=async()=>{try{status('확인하는 중…');await connect();const {display,email}=nickInfo(),password=$('boardPassword').value;
   if(password.length<6)throw Error('비밀번호를 6자 이상으로 정해 주세요.');
   if(!$('boardRemember').checked){$('boardRemember').focus();throw Error('아래 확인 칸에 체크해 주세요. 닉네임과 비밀번호는 잊어버리면 찾을 수 없어요.');}
   if(!confirm('닉네임 「'+display+'」(으)로 새로 만들까요?\n\n닉네임과 비밀번호를 잊어버리면 다시 찾을 수 없어요. 선생님도 찾아줄 수 없어요.\n지금 꼭 적어 두었나요?'))return;
   const r=await db.auth.signUp({email,password,options:{data:{nickname:display}}});if(r.error)throw authErr(r.error);
   if(!r.data.session){const t=await db.auth.signInWithPassword({email,password});if(t.error){if(/not confirmed/i.test(t.error.message||''))throw Error('운영자 설정 필요: Supabase에서 「Confirm email」을 꺼 주세요.');throw authErr(t.error)}}
-  await afterEnter();status('「'+display+'」(으)로 입장했어요. 닉네임과 비밀번호를 꼭 기억해 두세요!')}catch(e){err(e)}};
+  await afterEnter();logEvent('signup');status('「'+display+'」(으)로 입장했어요. 닉네임과 비밀번호를 꼭 기억해 두세요!')}catch(e){err(e)}};
  $('boardLogout').onclick=async()=>{try{check(await db.auth.signOut());user=null;sourceId=null;$('boardSource').textContent='';authUI()}catch(e){err(e)}};
  $('boardPublish').onclick=async()=>{
   if(busy)return;busy=true;$('boardPublish').disabled=true;
@@ -1314,7 +1331,7 @@ commit;
    if(!$('boardConsent').checked)throw Error('회원 공개 및 사본 편집 허용에 체크해 주세요.');
    const score=safeScore(window.ComposerBoard.get());if(!score.notes.length&&!score.accomp.length&&!score.harmony.length&&!score.rhythm.length)throw Error('먼저 음이나 리듬을 찍어 주세요.');
    if(new TextEncoder().encode(JSON.stringify(score)).length>280000)throw Error('작품 데이터가 너무 커요. 음 수를 줄여 주세요.');
-   check(await db.from('music_works').insert({title,nickname,description,score,source_id:sourceId}));page=0;await refresh();status('작품을 올렸어요. WAV 음원은 업로드하지 않았어요.');
+   check(await db.from('music_works').insert({title,nickname,description,score,source_id:sourceId}));logEvent('work_publish',{bars:score.bars,remix:!!sourceId});page=0;await refresh();status('작품을 올렸어요. WAV 음원은 업로드하지 않았어요.');
   }catch(e){err(e)}finally{busy=false;$('boardPublish').disabled=false}
  };
  $('boardRefresh').onclick=()=>{openedId=null;refresh().catch(err)};
