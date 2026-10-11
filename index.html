@@ -77,7 +77,6 @@
       color:var(--muted);
       margin-bottom:12px;
     }
-    .step.playing{outline:3px solid #f59e0b;outline-offset:-2px}
     .step{height:32px;min-height:32px;padding:0;border-radius:4px;cursor:pointer}
     .step.on{box-shadow:inset 0 0 0 1px #505763}
     .step.accomp{background:#cbd2dc!important;box-shadow:inset 0 0 0 1px #7c8799}
@@ -221,6 +220,8 @@
  .board-fields{display:flex;gap:12px;flex-wrap:wrap}.board-fields label{flex:1;min-width:180px}.board-fields input,.board-fields textarea{width:100%;box-sizing:border-box}.board-fields textarea{min-height:70px}#boardStatus{min-height:26px;color:#405d79}#boardLink{width:100%}
  @media(max-width:600px){#boardPanel{inset:4px;padding:14px}}
   .chromatic-controls{border:1px solid #e0e3e8;border-radius:10px;padding:12px;flex-basis:100%;min-width:0}.chromatic-controls label{display:inline-flex;align-items:center;gap:5px;background:#f2f3f5;border:1px solid #dfe2e7;border-radius:7px;padding:8px;margin:3px;font-size:13px}.chromatic-label{font-size:11px}
+  .step.playing{box-shadow:inset 0 0 0 999px rgba(250,204,21,.42)!important;border-color:#e0a800!important}
+  .step.playing.on{outline:3px solid #f59e0b;outline-offset:-3px;box-shadow:inset 0 0 0 999px rgba(255,255,255,.28)!important}
 </style>
 </head>
 <body>
@@ -519,24 +520,22 @@
   }
   function cell(text,cls=''){const e=document.createElement('div');e.className=cls;e.textContent=text;return e}
   function refreshPlayhead(next){
-    const wrap=$('grid').firstElementChild;
-    if(wrap&&wrap.querySelectorAll){
-      if(playColumn>=0)wrap.querySelectorAll(`[data-col="${playColumn}"]`).forEach(e=>e.classList.remove('playing'));
-      if(next>=0)wrap.querySelectorAll(`[data-col="${next}"]`).forEach(e=>e.classList.add('playing'));
-    }
+    if(playColumn>=0)colCells[playColumn]?.forEach(e=>e.classList.remove('playing'));
+    if(next>=0)colCells[next]?.forEach(e=>e.classList.add('playing'));
     playColumn=next;
-    if(next>=0&&playing)followPlayhead(next);
+    if(next>=0&&playing&&!followQueued){followQueued=true;requestAnimationFrame(()=>{followQueued=false;if(playing&&playColumn>=0)followPlayhead(playColumn)})}
   }
   // 재생 위치가 화면 오른쪽 끝(또는 왼쪽 밖)에 닿으면 악보를 옆으로 넘겨 줌
+  let followQueued=false;
   function followPlayhead(col){
-    const box=$('grid').parentElement,cell=$('grid').querySelector(`.step[data-col="${col}"]`);if(!box||!cell)return;
-    const view=box.getBoundingClientRect(),c=cell.getBoundingClientRect(),x=c.left-view.left+box.scrollLeft,margin=Math.min(160,box.clientWidth*.2);
-    if(x+c.width>box.scrollLeft+box.clientWidth-margin||x<box.scrollLeft+margin){
-      const left=Math.max(0,x-box.clientWidth*.25);
+    const box=$('grid').parentElement;if(!box)return;
+    const g=gridGeom,x=g.label+g.gap+col*(g.width+g.gap),w=box.clientWidth,now=box.scrollLeft,margin=Math.min(120,w*.15);
+    if(x+g.width>now+w-margin||x<now+g.label){
+      const left=Math.max(0,x-g.label-w*.1);
       try{box.scrollTo({left,behavior:'smooth'})}catch(e){box.scrollLeft=left}
     }
   }
-  let renderedOctaves=Number(octSel.value),renderedKey=keySel.value;
+  let renderedOctaves=Number(octSel.value),renderedKey=keySel.value,colCells=[],gridGeom={label:72,width:34,gap:2};
   function render(){
     renderedOctaves=Number(octSel.value);renderedKey=keySel.value;syncChromatics();
     const all=rows(),d=divide(),perBar=Number(beatsSel.value)*d,n=count(),width=d===4?24:d===2?29:34,wrap=document.createElement('div');
@@ -576,6 +575,8 @@
     all.forEach((r,i)=>row(label(r),rowColor(r),i));
     const sep=cell('리듬 ↓','hint');sep.style.gridColumn=`1 / span ${n+1}`;sep.style.marginTop='12px';wrap.appendChild(sep);
     drums.forEach((dr,i)=>row(dr,['#b9c1cb','#b9c1cb','#b9c1cb'][i],i,true));
+    colCells=Array.from({length:n},()=>[]);wrap.querySelectorAll('.step[data-col]').forEach(e=>colCells[Number(e.dataset.col)]?.push(e));
+    gridGeom={label:all.some(isChromatic)?108:72,width,gap:2};
     $('grid').replaceChildren(wrap);commitHistory();
   }
   $('grid').addEventListener('pointerdown',e=>{
