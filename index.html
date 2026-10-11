@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <!-- GitHub/Vercel: 아래 두 값만 Supabase 연결 시 입력하세요. 비밀 키/service_role 금지. -->
-<script>window.MUSIC_BOARD_CONFIG={url:"",key:""};</script>
+<script>window.MUSIC_BOARD_CONFIG={url:"https://dbcydfbduservhiwiwgj.supabase.co",key:"sb_publishable_ojqIzp7fD06E50JraS4i-g_uLU8p8pS"};</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>음악놀이터</title>
@@ -92,6 +92,7 @@
     .compose-tools select,.compose-tools input{margin-top:6px}
     .compose-tools input[type="number"]{width:72px}
     #lockAccomp[aria-pressed="true"]{background:#f3f4f6;border-color:#aab0ba}
+    #repeatAll[aria-pressed="true"]{background:#e9eef4;border-color:#8d9cad;font-weight:700}
     #loop[aria-pressed="true"]{background:#e9eef4;border-color:#8d9cad}
     .help-note{font-size:13px;color:#68707b;line-height:1.5;margin:4px 0 0}
     .tempo-control{display:flex;align-items:center;gap:10px;min-height:44px}
@@ -232,6 +233,7 @@
   <div class="workspace-main">
   <div class="actions main-actions">
     <button id="play" class="primary">▶ 재생</button>
+    <button id="repeatAll" type="button" aria-pressed="false" title="켜면 정지를 누를 때까지 곡을 계속 반복해요">🔁 반복재생: 꺼짐</button>
     <button id="stop">■ 정지</button>
     <button id="undo" type="button" title="Ctrl/Cmd+Z" disabled>↶ 실행 취소</button>
     <button id="redo" type="button" title="Ctrl/Cmd+Shift+Z" disabled>↷ 다시 실행</button>
@@ -449,7 +451,7 @@
   let harmony=new Set(),harmonyHolds=new Set();
   let mix={melody:100,harmony:75,accomp:65,rhythm:65},muted={melody:false,harmony:false,accomp:false,rhythm:false};
   let history=[],historyIndex=-1,historyReady=false,historyMoving=false,applying=false,selection=null,selecting=false;
-  let notes=new Set(),accomp=new Set(),holds=new Set(),accompHolds=new Set(),rhythm=new Set(),ctx,playing=false,playColumn=-1,timers=[],activeSources=[],locked=false,looping=false,playId=0,drag=null;
+  let notes=new Set(),accomp=new Set(),holds=new Set(),accompHolds=new Set(),rhythm=new Set(),ctx,playing=false,playColumn=-1,timers=[],activeSources=[],locked=false,looping=false,repeatAll=false,playId=0,drag=null;
   const banks={},pending={};
   const divide=()=>Number(divSel.value),count=()=>Number(barsSel.value)*Number(beatsSel.value)*divide();
   const rows=(octaves=Number(octSel.value),keyId=keySel.value,extras=chromatics)=>{
@@ -671,7 +673,7 @@
     function cycle(){
       if(!playing||id!==playId)return;const start=a.currentTime+.025;scheduleScore(a,score,buffers,start,liveBuses,s.instrument,true);
       for(let c=first;c<last;c++)timers.push(setTimeout(()=>{if(playing&&id===playId)refreshPlayhead(c)},25+(c-first)*60000/s.tempo/s.divide));
-      timers.push(setTimeout(()=>{if(id!==playId)return;if(looping)cycle();else{playing=false;refreshPlayhead(-1)}},25+score.seconds*1000));
+      timers.push(setTimeout(()=>{if(id!==playId)return;if(looping||repeatAll)cycle();else{playing=false;refreshPlayhead(-1)}},25+score.seconds*1000));
     }
     cycle();
   }
@@ -851,6 +853,7 @@
     else{notes.clear();accomp.clear();holds.clear();accompHolds.clear();harmony.clear();harmonyHolds.clear();rhythm.clear()}stop();render()};
   $('lockAccomp').onclick=()=>lock(!locked);
   $('editTrack').onchange=()=>{if(locked&&$('editTrack').value==='accomp')$('editTrack').value='melody'};
+  $('repeatAll').onclick=()=>{repeatAll=!repeatAll;$('repeatAll').setAttribute('aria-pressed',String(repeatAll));$('repeatAll').textContent=repeatAll?'🔁 반복재생: 켜짐':'🔁 반복재생: 꺼짐';$('editStatus').textContent=repeatAll?'반복재생을 켰어요. 정지를 누를 때까지 계속 재생돼요.'+(looping?' (선택 마디 반복이 켜져 있어 그 구간만 반복해요)':''):'반복재생을 껐어요. 지금 재생 중이면 이번 바퀴까지만 재생해요.'};
   $('loop').onclick=()=>{looping=!looping;$('loop').setAttribute('aria-pressed',String(looping));$('loop').textContent=looping?'↻ 선택 마디 반복: 켜짐':'↻ 선택 마디 반복: 꺼짐';if(playing)stop()};
   $('loopStart').onchange=syncLoop;$('loopEnd').onchange=()=>{syncLoop();if(Number($('loopEnd').value)<Number($('loopStart').value))$('loopStart').value=$('loopEnd').value};
   tempo.oninput=()=>tempoNumber.value=tempo.value;
