@@ -214,6 +214,7 @@
  #boardPanel[hidden],#boardPanel [hidden]{display:none!important}
  .board-inner{max-width:1050px;margin:auto}.board-top{display:flex;justify-content:space-between;align-items:center;gap:16px}.board-box{border:1px solid #e1e5eb;border-radius:12px;background:white;padding:16px;margin:16px 0}
  #boardCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.work-card{padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:white;overflow-wrap:anywhere}.work-card h3{margin:0 0 8px}.work-controls{display:flex;flex-wrap:wrap;gap:7px}.work-controls button{font-size:13px}
+ .board-warning{background:#fff7e6;border:1px solid #f2c36b;border-radius:10px;padding:10px 12px;color:#6b4a0e;font-size:14px;line-height:1.6;margin:10px 0}
  .board-fields{display:flex;gap:12px;flex-wrap:wrap}.board-fields label{flex:1;min-width:180px}.board-fields input,.board-fields textarea{width:100%;box-sizing:border-box}.board-fields textarea{min-height:70px}#boardStatus{min-height:26px;color:#405d79}#boardLink{width:100%}
  @media(max-width:600px){#boardPanel{inset:4px;padding:14px}}
   .chromatic-controls{border:1px solid #e0e3e8;border-radius:10px;padding:12px;flex-basis:100%;min-width:0}.chromatic-controls label{display:inline-flex;align-items:center;gap:5px;background:#f2f3f5;border:1px solid #dfe2e7;border-radius:7px;padding:8px;margin:3px;font-size:13px}.chromatic-label{font-size:11px}
@@ -405,20 +406,22 @@
 <div class="board-top"><div><h2>작품마당</h2><p>나의 음악을 나누고, 친구의 음악을 이어 만들어요.</p></div><button id="boardClose">작곡실로 돌아가기</button></div>
 <p id="boardStatus" role="status" aria-live="polite">연결을 준비하고 있어요.</p>
 <input id="boardLink" hidden readonly aria-label="공유할 작품 링크">
-<div id="boardAuth" class="board-box"><strong>로그인</strong><p class="hint">작품은 이 사이트에 로그인한 회원 모두에게 공개됩니다. 반별 비공개 공간은 아닙니다. 이메일은 작품에 표시되지 않아요.</p>
-<div class="board-fields"><label>이메일<input id="boardEmail" type="email" autocomplete="username"></label><label>비밀번호<input id="boardPassword" type="password" minlength="8" autocomplete="current-password"></label></div>
-<button id="boardLogin">로그인</button> <button id="boardSignup">회원가입</button></div>
-<div id="boardMember" hidden><span id="boardUser"></span> <button id="boardLogout">로그아웃</button><p class="hint">공용 컴퓨터에서는 수업이 끝나면 로그아웃해 주세요.</p></div>
+<div id="boardAuth" class="board-box"><strong>작품마당 입장</strong><p class="hint">이메일 없이 닉네임과 비밀번호로 들어와요. 처음이면 「처음이에요 · 새로 만들기」, 다음부터는 같은 닉네임과 비밀번호로 「입장하기」를 누르세요. 작품은 작품마당에 들어온 모두에게 공개돼요.</p>
+<p class="board-warning" role="note"><strong>⚠ 꼭 기억하세요!</strong> 닉네임이나 비밀번호를 잊어버리면 <b>다시 찾을 방법이 없어요.</b> 선생님도 찾아줄 수 없고, 그 닉네임으로 올린 작품도 다시 관리할 수 없어요. 공책이나 알림장에 꼭 적어 두세요.<br><b>🔒 비밀번호는 다른 사이트에서 쓰지 않는 비밀번호를 사용해주세요.</b></p>
+<div class="board-fields"><label>닉네임 <span class="hint">(한글·영문·숫자·_ 2~10자)</span><input id="boardNickLogin" maxlength="10" autocomplete="username" autocapitalize="off" spellcheck="false"></label><label>비밀번호 <span class="hint">(6자 이상)</span><input id="boardPassword" type="password" minlength="6" autocomplete="current-password"></label></div>
+<button id="boardLogin" class="primary">입장하기</button> <button id="boardSignup">처음이에요 · 새로 만들기</button>
+<label id="boardRememberWrap" class="check-label" style="display:block;margin-top:10px"><input id="boardRemember" type="checkbox"> 닉네임과 비밀번호를 잊어버리면 찾을 수 없다는 것을 알고, 따로 적어 두었어요. <span class="hint">(새로 만들 때 필요)</span></label></div>
+<div id="boardMember" hidden><span id="boardUser"></span> <button id="boardLogout">나가기</button><p class="hint">공용 컴퓨터에서는 수업이 끝나면 꼭 「나가기」를 눌러 주세요. 창을 닫아도 자동으로 나가져요.</p></div>
 <details id="boardComposer" class="board-box" hidden><summary>지금 만든 작품 올리기</summary>
-<div class="board-fields"><label>제목<input id="boardTitle" maxlength="80"></label><label>별명<input id="boardNick" maxlength="30"></label><label>작품 소개<textarea id="boardDescription" maxlength="500"></textarea></label></div>
+<div class="board-fields"><label>제목<input id="boardTitle" maxlength="80"></label><label>닉네임<input id="boardNick" maxlength="30" readonly title="입장한 닉네임으로 올라가요"></label><label>작품 소개<textarea id="boardDescription" maxlength="500"></textarea></label></div>
 <p id="boardSource" class="hint"></p><label><input id="boardConsent" type="checkbox">내가 공유할 수 있는 작품이며, 회원 공개와 사본 편집을 허용해요.</label><p class="hint">음 배치·박자·악기·템포만 저장해요. WAV 파일은 올리지 않아요.</p><button id="boardPublish" class="primary">작품 올리기</button></details>
 <div class="work-controls"><label>정렬 <select id="boardSort"><option value="new">최신순</option><option value="likes">좋아요순</option><option value="remixes">많이 가져간 순</option></select></label><label><input id="boardMine" type="checkbox">내 작품만</label><button id="boardRefresh">새로고침 · 전체 목록</button></div>
 <p class="hint">좋아요·가져가기는 계정당 한 번 집계해요. ‘많이 가져간 순’은 사본을 가져간 회원 수이며, 편집을 완성한 횟수는 아니에요.</p>
 <div id="boardCards"></div><div class="work-controls" style="margin-top:16px"><button id="boardPrev" disabled>이전</button><span id="boardPage">1쪽</span><button id="boardNext" disabled>다음</button></div>
 <details id="boardSetup" class="board-box" hidden><summary>운영자: GitHub · Vercel · Supabase 연결 안내</summary>
-<ol><li>이 파일을 <b>index.html</b> 이름으로 GitHub 저장소 최상위에 올립니다.</li><li>Vercel에서 저장소를 Import합니다. Framework Preset은 Other, Build Command는 비워 두고 Output Directory는 루트(.)로 지정합니다.</li><li>Supabase 프로젝트를 만든 뒤 아래 SQL을 다운로드하여 SQL Editor에 붙여 넣고 한 번 실행합니다.</li><li>Authentication의 Email 로그인을 사용합니다. URL Configuration의 Site URL과 Redirect URLs에 Vercel 주소를 등록합니다. 이메일 확인을 사용할 경우 실제 학생 가입 전에 메일 발송 설정과 발송 제한도 확인하세요.</li><li>이 HTML 맨 위 <code>MUSIC_BOARD_CONFIG</code>의 url에는 프로젝트 URL, key에는 <b>Publishable key</b>(또는 legacy anon key)를 입력해 GitHub에 다시 올립니다. <b>secret/service_role 키는 절대 입력하지 않습니다.</b></li><li>두 계정으로 게시·좋아요 취소·사본 편집·본인 작품 삭제와 타인 작품 삭제 차단을 확인한 뒤 학생에게 안내합니다.</li></ol>
-<button id="downloadSQL">Supabase 설정 SQL 다운로드</button><p>게시판에는 파일 저장소(Storage)가 필요하지 않습니다. 작품은 JSON으로 저장하며 각 작품은 최대 약 280KB로 제한합니다. 이 버전은 회원 전체 공유 공간입니다. 가입을 제한하려면 Supabase에서 신규 가입을 끄고 운영자가 계정을 만들어 주세요. 교사는 Supabase Table Editor에서 게시물을 관리할 수 있습니다.</p>
-<p>작품 삭제는 본인만 가능합니다. 변경한 작품은 새 게시물로 올립니다. 링크는 로그인 후 열립니다. 음원 CDN과 Supabase 접속은 실제 학교 네트워크에서 확인해 주세요.</p>
+<ol><li>이 파일을 <b>index.html</b> 이름으로 GitHub 저장소 최상위에 올립니다.</li><li>Vercel에서 저장소를 Import합니다. Framework Preset은 Other, Build Command는 비워 두고 Output Directory는 루트(.)로 지정합니다.</li><li>Supabase 프로젝트(기존 프로젝트도 가능)의 SQL Editor에 아래 SQL을 붙여 넣고 한 번 실행합니다.</li><li>Authentication → Sign In / Providers에서 Email 로그인과 「Allow new users to sign up」을 켜고 <b>「Confirm email」을 끕니다.</b> 학생은 닉네임·비밀번호만 쓰며 메일은 발송되지 않습니다. Authentication → Rate Limits에서 가입·로그인 한도를 반 인원보다 넉넉히 올립니다(학교는 여러 학생이 같은 IP를 씁니다).</li><li>이 HTML 맨 위 <code>MUSIC_BOARD_CONFIG</code>의 url에는 프로젝트 URL, key에는 <b>Publishable key</b>(또는 legacy anon key)를 입력해 GitHub에 다시 올립니다. <b>secret/service_role 키는 절대 입력하지 않습니다.</b></li><li>두 계정으로 게시·좋아요 취소·사본 편집·본인 작품 삭제와 타인 작품 삭제 차단을 확인한 뒤 학생에게 안내합니다.</li></ol>
+<button id="downloadSQL">Supabase 설정 SQL 다운로드</button><p>게시판에는 파일 저장소(Storage)가 필요하지 않습니다. 작품은 JSON으로 저장하며 각 작품은 최대 약 280KB로 제한합니다. 이 버전은 회원 전체 공유 공간입니다. 닉네임·비밀번호를 잊은 계정은 복구 기능이 없습니다. 교사는 Supabase Table Editor에서 게시물을 관리할 수 있습니다.</p>
+<p>작품 삭제는 본인만 가능합니다. 변경한 작품은 새 게시물로 올립니다. 링크는 입장 후 열립니다. 음원 CDN과 Supabase 접속은 실제 학교 네트워크에서 확인해 주세요.</p>
 </details></div></section>
 
 <script>
@@ -1143,7 +1146,7 @@
 </script>
 <footer class="wrap" style="font-size:12px;color:#6b7280">악기 음원: FluidR3_GM SoundFont · CC BY 3.0 · <a href="https://gleitz.github.io/midi-js-soundfonts/" target="_blank" rel="noopener">출처와 라이선스</a>. 리듬 소리는 이 페이지에서 생성합니다. 예시 반주 코드 참고: <a href="https://www.pianolessons4children.com/lessons/twinkle-twinkle-little-star.php" target="_blank" rel="noopener">작은별</a>.<details style="margin-top:8px"><summary>음원 출처·배포 전 확인</summary><p>FluidR3_GM — 원 SoundFont: Frank Wen 및 기여자. MIDI.js용 렌더링: Benjamin Gleitzman. 배포처가 표시한 음원 이용 조건: <a href="https://creativecommons.org/licenses/by/3.0/us/" target="_blank" rel="noopener">CC BY 3.0 US</a>. 이 앱은 재생 시 음량·길이를 조정하고 여러 음을 합성합니다. 음원 및 이를 포함한 결과물을 공유할 때 출처와 이용 조건을 함께 표시하세요. 배포 도구의 <a href="https://github.com/gleitz/midi-js-soundfonts/blob/gh-pages/LICENSE.txt" target="_blank" rel="noopener">MIT 라이선스</a>도 참고하세요.</p><p>캐논: Johann Pachelbel의 보호기간이 만료된 원곡 도입부를 현재 조에 맞게 축약한 8마디 예시입니다. 원곡 전체나 원래의 돌림노래 성부를 재현한 악보는 아닙니다. 현대 편곡 악보나 상업 녹음은 사용하지 않았습니다.</p><p>나비야: 오래된 민요 선율(Hänschen klein). <a href="https://www.liederprojekt.org/lied30300-Haenschen_klein_ging_allein.html" target="_blank" rel="noopener">선율의 역사 출처</a>에서 1807년 전승 선율을 확인했습니다. 한국어 가사·현대 편곡 악보·녹음은 포함하지 않았으며, 코드반주와 아랫성부는 이 앱에서 구성했습니다.</p></details><div style="margin-top:22px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:13px;line-height:1.9;text-align:center"><div>만든 사람 <strong>송쌔미</strong></div><div>건의 및 문의사항 · <a href="mailto:yunsoo1205@naver.com">yunsoo1205@naver.com</a></div></div></footer>
 <script id="setupSQL" type="text/plain">
--- 작품마당 v1 / 새 Supabase 프로젝트의 SQL Editor에서 실행
+-- 작품마당 v1 / Supabase 프로젝트(기존 프로젝트 가능)의 SQL Editor에서 실행
 begin;
 create table public.music_works (
  id uuid primary key default gen_random_uuid(),
@@ -1209,6 +1212,25 @@ commit;
  const $=id=>document.getElementById(id),cfg=window.MUSIC_BOARD_CONFIG;
  let db,user=null,page=0,request=0,sourceId=null,busy=false,openedId=null;
  const status=t=>$('boardStatus').textContent=t;
+ // 닉네임 → 내부용 가짜 이메일. 메일은 발송되지 않음(Confirm email 꺼야 함).
+ const NICK_DOMAIN='music-play-ground.vercel.app';
+ function nickInfo(){
+  const display=$('boardNickLogin').value.normalize('NFC').trim();
+  if(!/^[가-힣A-Za-z0-9_]{2,10}$/.test(display))throw Error('닉네임은 한글·영문·숫자·_로 2~10자로 적어 주세요. 띄어쓰기는 쓸 수 없어요.');
+  const hex=[...new TextEncoder().encode(display.toLowerCase())].map(b=>b.toString(16).padStart(2,'0')).join('');
+  return {display,email:'n'+hex+'@'+NICK_DOMAIN};
+ }
+ const nickOf=u=>u?.user_metadata?.nickname||'';
+ function authErr(e,mode){
+  const code=e?.code||'',msg=String(e?.message||'');
+  if(code==='invalid_credentials'||/invalid login credentials/i.test(msg))return Error('닉네임 또는 비밀번호가 맞지 않아요. 처음이라면 「처음이에요 · 새로 만들기」를 눌러 주세요.');
+  if(code==='user_already_exists'||/already registered/i.test(msg))return Error('이미 누가 쓰고 있는 닉네임이에요. 내 닉네임이라면 「입장하기」를, 아니라면 다른 닉네임을 써 주세요.');
+  if(code==='weak_password'||/password/i.test(msg)&&/least|short|weak/i.test(msg))return Error('비밀번호를 6자 이상으로 정해 주세요.');
+  if(code==='over_request_rate_limit'||e?.status===429)return Error('지금 입장하는 친구가 많아요. 1분 뒤에 다시 눌러 주세요.');
+  if(code==='signup_disabled')return Error('지금은 새로 만들 수 없어요. 선생님께 알려 주세요.');
+  if(code==='email_address_invalid')return Error('운영자 확인 필요: 닉네임 계정 형식이 거부되었어요.');
+  return e;
+ }
  const err=e=>{console.error(e);status(e.message==='Failed to fetch'?'연결되지 않았어요. 인터넷 연결과 Supabase 설정을 확인해 주세요.':e.message||'작업을 완료하지 못했어요.')};
  const check=r=>{if(r.error)throw r.error;return r.data};
  const node=(tag,text,cls)=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n};
@@ -1223,8 +1245,8 @@ commit;
    s[t]=[...new Set(raw[t])].filter(k=>{if(typeof k!=='string'||!/^\d+:\d+$/.test(k))return false;const [r,c]=k.split(':').map(Number);return r<(t==='rhythm'?3:window.ComposerBoard.rowCount(s))&&c<s.bars*s.beats*s.divide});
   }return s;
  }
- function authUI(){ $('boardAuth').hidden=!!user;$('boardMember').hidden=!user;$('boardComposer').hidden=!user;$('boardUser').textContent=user?'로그인됨 · '+user.email:'';if(!user)$('boardCards').replaceChildren(); }
- async function requireUser(){if(!db)throw Error('먼저 작품마당을 연결해 주세요.');if(!user)throw Error('로그인한 뒤 이용해 주세요.');}
+ function authUI(){ $('boardAuth').hidden=!!user;$('boardMember').hidden=!user;$('boardComposer').hidden=!user;$('boardUser').textContent=user?'입장함 · '+(nickOf(user)||'닉네임 없음'):'';$('boardNick').value=nickOf(user);if(!user)$('boardCards').replaceChildren(); }
+ async function requireUser(){if(!db)throw Error('먼저 작품마당을 연결해 주세요.');if(!user)throw Error('닉네임으로 입장한 뒤 이용해 주세요.');}
  async function getWork(id){await requireUser();const w=check(await db.from('music_works').select('*').eq('id',id).single());w.score=safeScore(w.score);return w;}
  function card(w){
   const c=node('article','', 'work-card');c.append(node('h3',w.title),node('p',w.nickname+' · '+new Date(w.created_at).toLocaleDateString('ko-KR'),'hint'),node('p',w.description));
@@ -1232,7 +1254,7 @@ commit;
   const controls=node('div','','work-controls');
   controls.append(action('▶ 듣기',async()=>{const full=await getWork(w.id);await window.ComposerBoard.preview(full.score);status(w.title+' 감상 중 · 작곡 중인 내용은 그대로예요.')}),action('■',()=>window.ComposerBoard.stop()));
   controls.append(action((w.liked?'♥':'♡')+' '+(w.likes||0),async()=>{await requireUser();if(w.liked)check(await db.from('music_likes').delete().eq('work_id',w.id).eq('user_id',user.id));else{const r=await db.from('music_likes').insert({work_id:w.id});if(r.error?.code!=='23505')check(r)}await refresh()}));
-  controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 로그인이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
+  controls.append(action('링크 공유',async()=>{const u=new URL(location.href);u.hash='';u.search='';u.searchParams.set('work',w.id);try{await navigator.clipboard.writeText(u.href);status('링크를 복사했어요. 받는 사람도 입장이 필요해요.')}catch{ $('boardLink').hidden=false;$('boardLink').value=u.href;$('boardLink').focus();$('boardLink').select();status('아래 링크를 복사해 주세요.')}}));
   controls.append(action('사본으로 편집 · '+(w.remixes||0),async()=>{
    const full=await getWork(w.id);
    if(!confirm('현재 작업을 임시저장하고 이 작품의 사본을 불러올까요? 원본은 바뀌지 않아요.'))return;
@@ -1256,14 +1278,22 @@ commit;
   if(!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(cfg.url))throw Error('Supabase 프로젝트 URL을 확인해 주세요.');
   if(cfg.key.startsWith('sb_secret_')||(()=>{try{return JSON.parse(atob(cfg.key.split('.')[1])).role==='service_role'}catch{return false}})())throw Error('서버 비밀 키는 사용할 수 없어요. Publishable key를 넣어 주세요.');
   const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0/+esm');
-  db=createClient(cfg.url,cfg.key);user=check(await db.auth.getSession()).session?.user||null;authUI();
-  db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();if(!user){request++;window.ComposerBoard.stop();status('로그인하면 작품마당을 볼 수 있어요.')}});
-  if(user)await refresh();else status('로그인하면 작품을 올리고 친구 작품을 볼 수 있어요.');
+  let storage;try{storage=window.sessionStorage;storage.setItem('_t','1');storage.removeItem('_t')}catch{storage=undefined}
+  db=createClient(cfg.url,cfg.key,{auth:{storage,persistSession:true}});user=check(await db.auth.getSession()).session?.user||null;authUI();
+  db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();if(!user){request++;window.ComposerBoard.stop();status('닉네임과 비밀번호로 입장하면 작품마당을 볼 수 있어요.')}});
+  if(user)await refresh();else status('닉네임과 비밀번호로 입장하면 작품을 올리고 친구 작품을 볼 수 있어요.');
  }
  $('openBoard').onclick=async()=>{$('boardPanel').hidden=false;try{await connect();if(user)await refresh()}catch(e){err(e)}};
  $('boardClose').onclick=()=>{$('boardPanel').hidden=true;window.ComposerBoard.stop()};
- $('boardLogin').onclick=async()=>{try{await connect();if(!db)return;check(await db.auth.signInWithPassword({email:$('boardEmail').value.trim(),password:$('boardPassword').value}));user=check(await db.auth.getUser()).user;$('boardPassword').value='';authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}catch(e){err(e)}};
- $('boardSignup').onclick=async()=>{try{await connect();if(!db)return;const password=$('boardPassword').value;if(password.length<8)throw Error('비밀번호는 8자 이상으로 정해 주세요.');check(await db.auth.signUp({email:$('boardEmail').value.trim(),password,options:{emailRedirectTo:location.origin+location.pathname}}));$('boardPassword').value='';status('이메일의 확인 링크를 누른 뒤 로그인해 주세요. 기존 계정이면 로그인을 이용하세요.')}catch(e){err(e)}};
+ async function afterEnter(){user=check(await db.auth.getUser()).user;$('boardPassword').value='';$('boardRemember').checked=false;authUI();const id=new URLSearchParams(location.search).get('work');if(id)await openWork(id);else await refresh()}
+ $('boardLogin').onclick=async()=>{try{await connect();if(!db)return;const {email}=nickInfo();const r=await db.auth.signInWithPassword({email,password:$('boardPassword').value});if(r.error)throw authErr(r.error);await afterEnter()}catch(e){err(e)}};
+ $('boardSignup').onclick=async()=>{try{await connect();if(!db)return;const {display,email}=nickInfo(),password=$('boardPassword').value;
+  if(password.length<6)throw Error('비밀번호를 6자 이상으로 정해 주세요.');
+  if(!$('boardRemember').checked){$('boardRemember').focus();throw Error('아래 확인 칸에 체크해 주세요. 닉네임과 비밀번호는 잊어버리면 찾을 수 없어요.');}
+  if(!confirm('닉네임 「'+display+'」(으)로 새로 만들까요?\n\n닉네임과 비밀번호를 잊어버리면 다시 찾을 수 없어요. 선생님도 찾아줄 수 없어요.\n지금 꼭 적어 두었나요?'))return;
+  const r=await db.auth.signUp({email,password,options:{data:{nickname:display}}});if(r.error)throw authErr(r.error);
+  if(!r.data.session){const t=await db.auth.signInWithPassword({email,password});if(t.error){if(/not confirmed/i.test(t.error.message||''))throw Error('운영자 설정 필요: Supabase에서 「Confirm email」을 꺼 주세요.');throw authErr(t.error)}}
+  await afterEnter();status('「'+display+'」(으)로 입장했어요. 닉네임과 비밀번호를 꼭 기억해 두세요!')}catch(e){err(e)}};
  $('boardLogout').onclick=async()=>{try{check(await db.auth.signOut());user=null;sourceId=null;$('boardSource').textContent='';authUI()}catch(e){err(e)}};
  $('boardPublish').onclick=async()=>{
   if(busy)return;busy=true;$('boardPublish').disabled=true;
