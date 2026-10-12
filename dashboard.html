@@ -89,6 +89,15 @@ code{ font-size:12px; color:var(--grape); }
 #gate button{ margin-top:12px; width:100%; padding:10px; background:var(--grape); color:#fff; border:none; }
 #gate .err{ color:var(--berry); font-size:12.5px; margin-top:8px; min-height:16px; }
 .hidden{ display:none !important; }
+.school-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.school-tools label{font-size:13px;display:flex;gap:5px;align-items:center}
+.school-tools input[type=search],.school-auth input{font:inherit;border:2px solid #E6DDEC;border-radius:12px;padding:8px 10px;max-width:100%}
+.school-tools input[type=search]{flex:1;min-width:220px;font-size:13px}
+.school-auth{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:#fff;padding:14px;border-radius:14px;margin-top:12px}
+.school-auth p{flex-basis:100%;font-size:13px}.school-auth label{font-size:13px;display:grid;gap:4px}
+.school-codes{display:flex;flex-wrap:wrap;gap:5px}.school-codes code{padding:3px 7px;background:#efedf9;border-radius:6px}
+.school-table{min-width:780px}.school-table th{white-space:nowrap}.school-detail td{background:#f5f3fb}
+.school-details summary{cursor:pointer;font-weight:bold}.school-details ul{list-style:none;padding:8px 0;line-height:1.9}
 </style>
 </head>
 <body>
@@ -111,6 +120,7 @@ code{ font-size:12px; color:var(--grape); }
 
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="main">메인</button>
+    <button class="tab-btn" data-tab="schools">🏫 학교별 방문</button>
     <button class="tab-btn" data-tab="usage">기능·작품</button>
     <button class="tab-btn" data-tab="cumulative">누적 현황</button>
   </div>
@@ -119,7 +129,7 @@ code{ font-size:12px; color:var(--grape); }
 
   <div class="card">
     <h2>오늘 한눈에 <button id="refresh-today">새로고침</button></h2>
-    <p class="help">한국 시간 기준 오늘이에요. '입장한 학생'은 사이트를 연 학생 수예요 — 공용 컴퓨터 한 대는 1명으로 세되, 같은 컴퓨터라도 작품마당 닉네임이 다르면 다른 학생으로 세요. '활동한 분'은 클릭·키 입력이 있었던 1분 단위를 더한 값이에요.</p>
+    <p class="help">한국 시간 기준 오늘이에요. '입장한 학생'은 작품마당에 닉네임으로 들어온 학생만 세요. '활동한 분'은 클릭·키 입력이 있었던 1분 단위를 더한 값이에요.</p>
     <div class="summary-row" id="today-stats"></div>
   </div>
 
@@ -137,7 +147,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="refresh-recent">새로고침</button>
       </span>
     </h2>
-    <p class="help">30초마다 자동으로 새로고침돼요. 위쪽일수록 지금 쓰고 있을 가능성이 높아요. 접속 코드는 페이지를 열 때마다 새로 생기고, 학생 코드는 같은 컴퓨터(닉네임으로 입장했으면 그 닉네임)면 늘 같아요.</p>
+    <p class="help">30초마다 자동으로 새로고침돼요. 위쪽일수록 지금 쓰고 있을 가능성이 높아요. 접속 코드는 페이지를 열 때마다 새로 생겨요.</p>
     <div class="body" id="recent-body"></div>
   </div>
 
@@ -148,7 +158,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="refresh-retention">새로고침</button>
       </span>
     </h2>
-    <p class="help">학생 수는 사이트를 연 학생 기준이에요(컴퓨터 1대 = 1명, 닉네임이 다르면 따로). 접속 수는 페이지를 연 횟수라 같은 학생이 새로고침하면 늘어나요.</p>
+    <p class="help">학생 수는 작품마당에 입장한 학생 기준이에요. 접속 수는 입장 여부와 상관없이 페이지를 연 횟수예요.</p>
     <div class="summary-row" id="retention-today" style="margin-bottom:12px;"></div>
     <div class="summary-row" id="retention-total"></div>
   </div>
@@ -160,7 +170,7 @@ code{ font-size:12px; color:var(--grape); }
         <button id="load-students">불러오기</button>
       </span>
     </h2>
-    <p class="help">컴퓨터 1대 = 1명, 작품마당 닉네임이 다르면 따로 세요. 활동한 시간이 긴 순서이고, 같은 학생은 언제나 같은 코드로 나와요.</p>
+    <p class="help">활동한 시간이 긴 순서예요. 같은 학생은 언제나 같은 코드로 나와서 날짜가 지나도 추적할 수 있어요.</p>
     <div class="body" id="students-body"><span class="muted">불러오기를 눌러주세요.</span></div>
   </div>
 
@@ -171,6 +181,34 @@ code{ font-size:12px; color:var(--grape); }
   </div>
 
   </div><!-- /main -->
+
+  <div class="tab-panel hidden" data-tab="schools">
+  <div class="card">
+    <h2>🏫 학교별 방문 현황 <button id="refresh-schools">새로고침</button></h2>
+    <p class="help">학교 이름은 선생님이 등록한 이름입니다. 코드는 학교 공통 코드가 아닌 학급마당 코드예요. 같은 학교의 여러 학급을 묶어 보여 줍니다. 방문 수는 해당 기간에 활동한 접속 수이며, 같은 접속은 한 번만 셉니다. 방문 브라우저 수는 학생 수와 다를 수 있어요.</p>
+    <form id="school-auth" class="school-auth">
+      <p>학교 이름·학급 코드는 작품마당 관리자만 볼 수 있어요.</p>
+      <label>관리자 닉네임 또는 이메일 <input id="school-admin-name" autocomplete="username" required></label>
+      <label>관리자 계정 비밀번호 <input id="school-admin-password" type="password" autocomplete="current-password" required></label>
+      <button type="submit" id="school-admin-login">관리자 확인</button>
+      <p class="muted">작품마당에서 관리자로 지정된 계정을 사용하세요. 첫 화면의 대시보드 비밀번호와 별개예요.</p>
+    </form>
+    <p id="school-status" class="muted" role="status"></p>
+    <div id="school-content" class="hidden">
+      <div class="school-tools">
+        <label>기간 <select id="school-days"><option value="1">오늘</option><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="0">전체</option></select></label>
+        <label>보기 <select id="school-view"><option value="schools">학교별</option><option value="classes">학급 코드별</option></select></label>
+        <label>정렬 <select id="school-sort"><option value="visits">방문 많은 순</option><option value="today">오늘 방문 많은 순</option><option value="recent">최근 방문순</option><option value="name">학교 이름순</option></select></label>
+        <label><input type="checkbox" id="school-today-only"> 오늘 방문한 곳만</label>
+        <input id="school-search" type="search" aria-label="학교 이름·학급 이름·코드 검색" placeholder="학교 이름·학급 이름·코드 검색">
+        <button id="school-admin-logout">관리자 확인 해제</button>
+      </div>
+      <div id="school-summary" class="summary-row" style="margin:12px 0"></div>
+      <div class="body" id="school-table"></div>
+      <p id="school-unassigned" class="muted" style="margin-top:12px"></p>
+    </div>
+  </div>
+  </div>
 
   <div class="tab-panel hidden" data-tab="usage">
 
@@ -337,7 +375,7 @@ async function loadRecent(){
     if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에는 접속 기록이 없어요.</span>`; return; }
     el.innerHTML = `<table><tr><th>접속 코드</th><th>학생</th><th>시작</th><th>마지막 활동</th><th>재생</th><th>활동(분)</th><th>기능 사용</th></tr>
       ${rows.map(r => `<tr><td><code>${esc(r.session_code)}</code></td>
-        <td><code>${esc(r.student_code)}</code></td>
+        <td>${r.student_code ? `<code>${esc(r.student_code)}</code>` : `<span class="muted">비입장</span>`}</td>
         <td>${kst(r.first_kst)}</td><td>${kst(r.last_kst)}</td><td>${fmt(r.plays)}</td><td>${fmt(r.minutes)}</td><td>${fmt(r.actions)}</td></tr>`).join("")}</table>`;
   } catch(e){ el.innerHTML = fail(e, NEED_SQL); }
 }
@@ -348,7 +386,7 @@ async function loadRetention(){
   try {
     const r = (await rpc("get_music_dash_retention", { p_min_days: n }))[0] || {};
     $("retention-today").innerHTML = stat(fmt(r.today_new), "오늘 처음 온 학생") + stat(fmt(r.today_students), "오늘 입장한 학생") + stat(fmt(r.today_sessions), "오늘 접속 수");
-    $("retention-total").innerHTML = stat(fmt(r.total_students), "누적 학생(브라우저)") + stat(fmt(r.active_students), `${n}일+ 접속 학생`) + stat(fmt(r.total_sessions), "누적 접속 수");
+    $("retention-total").innerHTML = stat(fmt(r.total_students), "누적 학생") + stat(fmt(r.active_students), `${n}일+ 접속 학생`) + stat(fmt(r.total_sessions), "누적 접속 수");
   } catch(e){ $("retention-today").innerHTML = fail(e, NEED_SQL); $("retention-total").innerHTML = ""; }
 }
 
@@ -357,7 +395,7 @@ async function loadStudents(){
   const el = $("students-body"); el.innerHTML = "불러오는 중...";
   try {
     const rows = await rpc("get_music_dash_students", { p_days: Number($("students-days").value), p_limit: 30 });
-    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 사이트를 연 학생 기록이 없어요.</span>`; return; }
+    if (!rows.length){ el.innerHTML = `<span class="muted">이 기간에 입장한 학생 기록이 없어요.</span>`; return; }
     const max = Math.max(1, ...rows.map(r => Number(r.minutes) || 0));
     el.innerHTML = `<table><tr><th>학생 코드</th><th>접속일</th><th style="width:30%;">활동(분)</th><th>재생</th><th>작품 올림</th><th>마지막 활동</th></tr>
       ${rows.map(r => `<tr><td><code>${esc(r.student_code)}</code></td><td>${fmt(r.days)}일</td>
@@ -448,14 +486,72 @@ async function loadCumulative(){
   } catch(e){ $("cumulative-stats").innerHTML = fail(e, NEED_SQL); }
 }
 
+/* ---------- 학교별 방문: 서버의 관리자 권한 확인 ---------- */
+let schoolSession=null,schoolData=null,schoolRequest=0;
+const SCHOOL_SESSION_KEY='music-dash-school-session';
+function validSchoolSession(){return schoolSession?.access_token&&Number(schoolSession.expires_at)>Date.now()/1000+15}
+function schoolAuthUI(){
+  const valid=validSchoolSession();$('school-auth').classList.toggle('hidden',!!valid);$('school-content').classList.toggle('hidden',!valid);
+  if(!valid){schoolData=null;$('school-table').replaceChildren();$('school-summary').replaceChildren();$('school-unassigned').textContent='';}
+}
+async function schoolRpc(name,body={}){
+  if(!validSchoolSession())throw Error('관리자 계정을 다시 확인해 주세요.');
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+schoolSession.access_token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok){const text=await res.text();let e;try{e=JSON.parse(text)}catch{}if(res.status===401||e?.code==='42501'){schoolSession=null;sessionStorage.removeItem(SCHOOL_SESSION_KEY);schoolAuthUI();throw Error('관리자 권한이 없거나 확인 시간이 만료됐어요.')}throw Error(e?.code==='PGRST202'?'school-visits.sql을 Supabase SQL Editor에서 먼저 실행해 주세요.':e?.message||text)}
+  return res.json();
+}
+async function schoolLogin(e){
+  e.preventDefault();const button=$('school-admin-login');button.disabled=true;$('school-status').textContent='관리자 권한을 확인하는 중…';
+  try{
+    const name=$('school-admin-name').value.normalize('NFC').trim(),password=$('school-admin-password').value;let email=name;
+    if(!name.includes('@')){if(!/^[가-힣A-Za-z0-9_]{2,10}$/.test(name))throw Error('작품마당 관리자 닉네임이나 이메일을 입력해 주세요.');email='n'+[...new TextEncoder().encode(name.toLowerCase())].map(b=>b.toString(16).padStart(2,'0')).join('')+'@music-play-ground.vercel.app'}
+    const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const data=await r.json();if(!r.ok)throw Error('계정 또는 비밀번호를 확인해 주세요.');schoolSession={access_token:data.access_token,expires_at:Math.floor(Date.now()/1000)+Number(data.expires_in||3600)};
+    if(await schoolRpc('is_music_admin')!==true){schoolSession=null;throw Error('작품마당 관리자로 지정된 계정만 볼 수 있어요.')}
+    try{sessionStorage.setItem(SCHOOL_SESSION_KEY,JSON.stringify(schoolSession))}catch{}
+    $('school-admin-password').value='';schoolAuthUI();await loadSchools();
+  }catch(e){schoolSession=null;schoolAuthUI();$('school-status').textContent=e.message}finally{button.disabled=false}
+}
+async function loadSchools(){
+  schoolAuthUI();if(!validSchoolSession())return;const ticket=++schoolRequest;
+  $('school-status').textContent='학교별 방문 현황을 불러오는 중…';
+  try{const data=await schoolRpc('get_music_dash_school_visits',{p_days:Number($('school-days').value)});if(ticket!==schoolRequest||!validSchoolSession())return;schoolData=data;renderSchools();$('school-status').textContent='한국 시간 기준 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'})+' 갱신'}
+  catch(e){if(ticket!==schoolRequest)return;$('school-status').textContent=e.message;schoolData=null;$('school-table').replaceChildren();$('school-summary').replaceChildren();$('school-unassigned').textContent=''}
+}
+function schoolRows(){
+  if(!schoolData)return [];const mode=$('school-view').value,query=$('school-search').value.trim().toLocaleLowerCase('ko-KR');
+  const rows=[...(mode==='classes'?schoolData.classes:schoolData.schools)||[]].filter(r=>(!$('school-today-only').checked||Number(r.today_visits)>0)&&(!query||[r.school,r.class_name,r.code,...(r.codes||[]),...(r.class_names||[])].filter(Boolean).join(' ').toLocaleLowerCase('ko-KR').includes(query)));
+  const sort=$('school-sort').value,byName=(a,b)=>String(a.school).localeCompare(String(b.school),'ko')||String(a.code||'').localeCompare(String(b.code||''));
+  rows.sort((a,b)=>sort==='name'?byName(a,b):sort==='recent'?String(b.last_kst||'').localeCompare(String(a.last_kst||''))||byName(a,b):Number(b[sort==='today'?'today_visits':'visits'])-Number(a[sort==='today'?'today_visits':'visits'])||byName(a,b));return rows;
+}
+function renderSchools(){
+  if(!schoolData)return;const rows=schoolRows(),isClass=$('school-view').value==='classes',summary=schoolData.summary||{};
+  $('school-summary').innerHTML=stat(fmt(summary.schools),'기간 내 방문 학교')+stat(fmt(summary.today_schools),'오늘 방문 학교')+stat(fmt(summary.visits),'학교 연결 방문 수')+stat(fmt(summary.visitors),'학교 연결 방문 브라우저');
+  $('school-unassigned').textContent='학교를 확인할 수 없는 접속: '+fmt(summary.unassigned_visits)+'회 · 학급 링크 없이 접속한 경우나 등록되지 않은 코드는 학교 순위에 포함하지 않습니다. 학교 이름이 다르게 등록되면 별도 학교로 표시될 수 있어요.';
+  if(!rows.length){$('school-table').innerHTML='<span class="muted">조건에 맞는 학교 방문 기록이 없어요.</span>';return}
+  $('school-table').innerHTML=`<table class="school-table"><thead><tr><th>순위</th><th>학교 이름${isClass?' · 학급':''}</th><th>학급 코드</th><th>방문</th><th>오늘 방문</th><th>브라우저</th><th>재생</th><th>작품 올림</th><th>최근 활동(KST)</th></tr></thead><tbody>${rows.map((r,i)=>{
+    const classes=(schoolData.classes||[]).filter(c=>c.school===r.school);const info=isClass?`${esc(r.school)}<br><span class="muted">${esc(r.class_name)}</span>`:`<details class="school-details"><summary>${esc(r.school)} <span class="muted">${fmt(classes.length)}개 방문 학급</span></summary><ul>${classes.map(c=>`<li>${esc(c.class_name)} · <code>${esc(c.code)}</code> · 방문 ${fmt(c.visits)}회 · 오늘 ${fmt(c.today_visits)}회</li>`).join('')}</ul></details>`;
+    const codes=isClass?[r.code]:r.codes||[];return `<tr><td>${i+1}</td><td>${info}</td><td><div class="school-codes">${codes.map(c=>`<code>${esc(c)}</code>`).join('')}</div></td><td><strong>${fmt(r.visits)}</strong></td><td>${Number(r.today_visits)>0?'<span class="pill">'+fmt(r.today_visits)+'</span>':'0'}</td><td>${fmt(r.visitors)}</td><td>${fmt(r.plays)}</td><td>${fmt(r.publishes)}</td><td>${kst(r.last_kst)}</td></tr>`}).join('')}</tbody></table>`;
+}
+function initSchools(){
+  try{schoolSession=JSON.parse(sessionStorage.getItem(SCHOOL_SESSION_KEY)||'null')}catch{}
+  schoolAuthUI();$('school-auth').addEventListener('submit',schoolLogin);
+  $('refresh-schools').addEventListener('click',loadSchools);$('school-days').addEventListener('change',loadSchools);
+  for(const id of ['school-view','school-sort','school-today-only'])$(id).addEventListener('change',renderSchools);$('school-search').addEventListener('input',renderSchools);
+  $('school-admin-logout').addEventListener('click',()=>{schoolRequest++;schoolSession=null;schoolData=null;try{sessionStorage.removeItem(SCHOOL_SESSION_KEY)}catch{}schoolAuthUI();$('school-status').textContent='관리자 확인을 해제했어요.'});
+  setInterval(()=>{if(!document.querySelector('.tab-panel[data-tab="schools"]').classList.contains('hidden')&&document.visibilityState==='visible')loadSchools()},60000);
+}
+
 /* ---------- 탭·초기화 ---------- */
 function switchTab(tab){
+  if(tab === "schools") loadSchools();
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("hidden", p.dataset.tab !== tab));
 }
 let started = false;
 function initDashboard(){
   if (started) return; started = true;
+  initSchools();
   buildWeekOptions();
   loadToday(); loadWeekly(); loadRecent(); loadRetention(); loadCumulative();
   document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
